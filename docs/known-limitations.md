@@ -20,8 +20,9 @@ commit, not a roadmap aspiration.
   and are refused with `unsupported_capability` rather than approximated.
 - Geocoding and search are unavailable. No engine has been evaluated (OG-009).
 - Tiles, offline packs and 3D streaming are not implemented.
-- The MCP transport adapter is not deployed. Tool schemas and the plan validator
-  exist and are tested; no server is running.
+- The MCP server runs over stdio only. It is not deployed behind a network
+  transport, and it serves the four spatial tools this build can honour; no
+  other tool is published.
 - No authentication, rate limiting or quota exists yet. This build is a local
   development deployment and must not be exposed publicly.
 
@@ -41,7 +42,12 @@ commit, not a roadmap aspiration.
 - Bounding boxes computed from geometry straddling the antimeridian span nearly
   the whole world; wrapped boxes are only correct when authored directly.
 - A `MultiPolygon` whose members overlap is not rejected in the Dart validator;
-  PostGIS `ST_IsValid` catches it at insert.
+  PostGIS `ST_IsValid` catches it at insert. Python rejects it earlier, reporting
+  `invalid_geometry`, so the two surfaces disagree on that one input class and
+  the parity vectors do not cover it.
+- Validation errors reach HTTP clients as `invalid_input` with the finer code in
+  `details.geometry_code`. A client that branches only on the top-level `code`
+  learns less than one using the SDK.
 
 ## Operations
 

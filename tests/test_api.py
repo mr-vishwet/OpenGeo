@@ -195,6 +195,7 @@ def test_contains_rejects_an_open_ring_with_a_stable_code(client: TestClient):
     )
     assert response.status_code == 422
     assert response.json()["errors"][0]["code"] == "invalid_input"
+    assert response.json()["errors"][0]["details"] == {"geometry_code": "invalid_ring"}
 
 
 def test_intersects_detects_a_crossing_line(client: TestClient):

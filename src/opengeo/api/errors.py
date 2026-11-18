@@ -51,11 +51,13 @@ class ApiError(Exception):
         *,
         hint: str | None = None,
         field: str | None = None,
+        details: dict[str, str] | None = None,
     ):
         self.code = code
         self.message = message
         self.hint = hint
         self.field = field
+        self.details = details
         super().__init__(message)
 
     @property
@@ -68,4 +70,6 @@ class ApiError(Exception):
             error["hint"] = self.hint
         if self.field:
             error["field"] = self.field
+        if self.details:
+            error["details"] = self.details
         return error

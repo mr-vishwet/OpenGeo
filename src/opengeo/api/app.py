@@ -86,6 +86,7 @@ def _geometry_or_reject(value: dict[str, Any], *, field: str):
             ErrorCode.INVALID_INPUT,
             exc.message,
             field=exc.path or field,
+            details={"geometry_code": exc.code.value},
         ) from exc
 
 

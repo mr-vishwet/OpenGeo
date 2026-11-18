@@ -91,9 +91,24 @@ dataset version per region and rejects invalid geometry at insert time.
 ## Tests
 
 ```bash
-pytest                                   # Python: 93 tests
-cd packages/geo_types && dart test       # Dart: 47 tests
+pytest                                   # Python: 133 tests
+cd packages/geo_types && dart test       # Dart: 76 tests
 ```
+
+Both suites validate `tests/parity/geometry_vectors.json`: hand-written verdicts
+for the geometry trust boundary. A validation rule that drifts on one surface
+fails the other.
+
+## Expose the tools to an agent
+
+```bash
+opengeo-mcp                              # MCP server over stdio
+```
+
+It publishes only what this deployment can serve: `geo.nearby`,
+`geo.distance`, `geo.contains` and `geo.intersects`. Routing, geocoding and
+isochrones are absent rather than stubbed, so an agent cannot be told a
+capability exists when it does not.
 
 ## Measure
 
