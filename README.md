@@ -1,22 +1,26 @@
 # OpenGeo
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/mr-vishwet/OpenGeo/actions)
+[![CI status](https://img.shields.io/github/actions/workflow/status/mr-vishwet/OpenGeo/.github/workflows/ci.yml?branch=main&label=CI)](https://github.com/mr-vishwet/OpenGeo/actions)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.13-blue)](https://python.org)
-[![Dart](https://img.shields.io/badge/Dart-3.14-blue)](https://dart.dev)
-[![ODbL](https://img.shields.io/badge/Data-ODbL-green)](DATA_SOURCES.md)
+[![Python 3.13](https://img.shields.io/badge/Python-3.13-blue)](https://python.org)
+[![Dart 3.14](https://img.shields.io/badge/Dart-3.14-blue)](https://dart.dev)
+[![Data: ODbL](https://img.shields.io/badge/Data-ODbL-green)](DATA_SOURCES.md)
 
-A modular, self-hostable geospatial platform: one spatial engine, multiple rendering environments, on-demand geographic data, and modular capabilities for apps, agents and games. Coordinates are EPSG:4326, longitude first. Distances carry an explicit unit and method. Bad geometry is rejected with a stable code — never repaired.
+> **OpenGeo** is a modular, self-hostable geospatial platform: one spatial engine, multiple rendering environments, on-demand geographic data, and modular capabilities for apps, agents and games.
 
-## What works today
+Coordinates are **EPSG:4326, longitude first**. Distances carry an explicit **unit and method**. Bad geometry is rejected with a **stable error code** — never silently repaired. One geography implementation powers every surface (HTTP API, MCP server, Dart SDK), so an answer cannot differ between REST and MCP.
 
-| Surface | What it does | State |
-|---|---|---|
-| **HTTP API** (`opengeo-api`) | Capability manifest, dataset metadata, place lookup, nearby search, geodesic distance, `contains`/`covers`/`intersects` predicates. Every response carries request id, dataset version, provenance and warnings. | Live |
-| **MCP server** (`opengeo-mcp`, stdio) | Publishes `geo.nearby`, `geo.distance`, `geo.contains`, `geo.intersects` — only what this build can actually serve. Routing, geocoding and isochrones are absent, not stubbed. | Live |
-| **Dart SDK** (`packages/geo_types`) | `Coordinate`, `Crs`, `BoundingBox` (antimeridian-aware), `Distance` (unit + method), and the seven GeoJSON geometry types with ring closure, degeneracy, self-intersection and hole-containment validation. No renderer, database or HTTP dependency. | Live |
-| **Ingestion gate** (`opengeo-ingest`) | Checksum-verified extracts, import runs with rejection counting, atomic publication with rollback, refusal above a 20 % rejected-record ratio. | Live |
-| **PostGIS** | Migration `0001_init.sql` creates the extension, schema and the one-active-version-per-region index. Served via `OPENGEO_STORE=postgis`. | Live on this host |
+## What OpenGeo is
+
+A single source of truth for geographic data in your infrastructure:
+
+- **One spatial engine** — validation, geodesy and predicates live once, shared by every client surface.
+- **Multiple surfaces** — a FastAPI HTTP API, a stdio MCP server for AI agents, and a dependency-free Dart SDK.
+- **Deterministic by design** — every answer carries a dataset version and request id; two answers with different versions are not comparable.
+- **Refusals, not approximations** — routing, geocoding and isochrones are absent rather than stubbed with a straight line.
+- **Self-hostable** — PostGIS-backed with atomic dataset publication, rollback, and a 20 % rejection gate on imports.
+
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -41,17 +45,39 @@ flowchart TD
     Store -.->|OPENGEO_STORE=postgis| PostGIS
 ```
 
+| Layer | Responsibility |
+|---|---|
+| **Surfaces** | HTTP routes, MCP tools, Dart value types — thin, no geography logic |
+| **Application** | One `FeatureStore` seam; validation boundary rejects bad input before any predicate |
+| **Data plane** | GeoJSON fixture today; PostGIS 16 with a geography GiST index when attached |
+
+## Capability matrix
+
+| Surface | Capability | State |
+|---|---|---|
+| HTTP API (`opengeo-api`) | `/healthz`, `/readyz`, `/v1/capabilities`, `/v1/datasets`, `/v1/places/{id}`, `/v1/nearby`, `/v1/spatial/{distance,contains,intersects}` | Live |
+| MCP server (`opengeo-mcp`) | `geo.nearby`, `geo.distance`, `geo.contains`, `geo.intersects` over stdio | Live |
+| Dart SDK (`packages/geo_types`) | `Coordinate`, `Crs`, `BoundingBox`, `Distance`, 7 GeoJSON geometry types | Live |
+| Ingestion gate (`opengeo-ingest`) | Checksum verify, import runs, atomic publish + rollback, 20 % rejection gate | Live |
+| PostGIS | `0001_init.sql` schema, one active version per region, GiST index | Live on dev host |
+
+`GET /v1/capabilities` is the authority on what works — `implemented` means exercised by the test suite; `unavailable` means refused, never approximated.
+
 ## Quickstart
 
-### Python API & MCP server
+### Run the API
 
 ```bash
+# 1. Create and activate the virtualenv
 python -m venv .venv
-.venv/Scripts/activate        # Windows
+.venv/Scripts/activate        # Windows: .venv\Scripts\activate.bat
+# macOS/Linux: source .venv/bin/activate
+
+# 2. Install OpenGeo in editable mode with dev tooling
 pip install -e ".[dev]"
 
-opengeo-api                   # http://127.0.0.1:8080
-opengeo-mcp                   # stdio MCP server
+# 3. Start the API (http://127.0.0.1:8080)
+opengeo-api
 ```
 
 Interactive schema: <http://127.0.0.1:8080/docs>
@@ -59,12 +85,10 @@ Interactive schema: <http://127.0.0.1:8080/docs>
 ### Check what this deployment can do
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/capabilities
+curl -s http://127.0.0.1:8080/v1/capabilities | python -m json.tool
 ```
 
-`state` on each capability is the authority — `implemented` means exercised by the test suite; `unavailable` / `requires_external_provider` means refused, not approximated.
-
-### Nearby search
+### Nearby search around Pune
 
 ```bash
 curl -s -X POST http://127.0.0.1:8080/v1/nearby \
@@ -77,7 +101,7 @@ curl -s -X POST http://127.0.0.1:8080/v1/nearby \
   }'
 ```
 
-Distances are metres with a declared method. `distance_m: null` means unknown — never zero.
+Every response carries `meta.request_id`, `meta.dataset_version`, `provenance.sources` and `warnings`. Distances are metres with a declared method; `distance_m: null` means unknown, never zero.
 
 ### Dart SDK
 
@@ -85,18 +109,28 @@ Distances are metres with a declared method. `distance_m: null` means unknown �
 cd packages/geo_types
 dart pub get
 dart test
+dart analyze
 ```
 
-## Serve a real database
+### MCP server (for AI agents)
+
+```bash
+opengeo-mcp        # stdio transport; publishes exactly 4 spatial tools
+```
+
+## Serve a real database (PostGIS)
 
 The reference deployment serves a 13-feature synthetic Pune fixture. To attach PostGIS:
 
 ```bash
+# 1. Configure credentials
 cp .env.example .env            # set POSTGRES_PASSWORD
+
+# 2. Start PostGIS + API
 docker compose -f infrastructure/compose.dev.yml --env-file .env up -d
 ```
 
-Then point the API at it:
+Then point the API at the database:
 
 ```bash
 OPENGEO_STORE=postgis \
@@ -104,7 +138,7 @@ OPENGEO_DATABASE_URL=postgresql://opengeo:<password>@localhost:5432/opengeo \
 opengeo-api
 ```
 
-The migration enforces one active dataset version per region and rejects invalid geometry at insert time. `infrastructure/db/migrations/0001_init.sql` is applied on a fresh volume and smoke-tested in CI.
+The migration (`infrastructure/db/migrations/0001_init.sql`) creates the PostGIS extension, enforces one active dataset version per region, and rejects invalid geometry at insert time.
 
 ## Import a real extract
 
@@ -112,32 +146,52 @@ The migration enforces one active dataset version per region and rejects invalid
 opengeo-ingest --source data/raw/pune.osm.geojson --sha256 <hex> --json
 ```
 
-The gate validates every feature through the API's trust boundary, counts rejections by reason, and exits non-zero when more than 20 % of records would be rejected. Nothing is repaired silently.
+The gate validates every feature through the API's trust boundary, counts rejections by reason, and exits non-zero when more than 20 % of records would be rejected. Nothing is repaired silently — a closed-by-hand ring or a pulled-in vertex fails at the gate, not in production.
 
 ## Tests & verification
 
 ```bash
-pytest                                   # Python: 147 tests (+2 skipped without Postgres)
-cd packages/geo_types && dart test       # Dart: 79 tests
-ruff check src tests                     # lint
-dart analyze                             # Dart analyzer
+# Python suite (147 tests; +2 skipped without a Postgres database)
+pytest
+
+# Dart SDK suite (79 tests)
+cd packages/geo_types && dart test
+
+# Linting
+ruff check src tests
+dart analyze
 ```
 
 Both suites validate `tests/parity/geometry_vectors.json` — hand-written geometry verdicts the Python service and Dart SDK are held to equally. A validation rule that drifts on one surface fails the other.
 
-Run the Postgres smoke test (requires a live database):
+Run the Postgres publication smoke test (requires a live database):
 
 ```bash
 OPENGEO_DATABASE_URL=... pytest tests/test_publication_smoke.py -q
 ```
 
-## Project state
+## Project status
 
-Phase 1 — the spatial core runs and is tested; the data plane is partially installed.
+**Phase 1 — spatial core** ✅ complete and tested
 
-**Installed:** Git, Dart/Flutter, Python 3.13, Docker Desktop + WSL2, PostGIS 16 (dev stack running on this host).
+| Component | Status | Notes |
+|---|---|---|
+| Git repo + governance (ADRs, LICENSE, SECURITY, CI) | Complete | `main` branch, `.docs/` gitignored |
+| Dart SDK `geo_types` | Complete | Value types + geometry validation |
+| Python `geo` core | Complete | Units, geodesy, validation boundary, predicates |
+| HTTP API | Complete | Envelope, error taxonomy, all `/v1/*` routes |
+| MCP server | Complete | 4 spatial tools, schema-drift test |
+| Ingestion gate | Complete | Checksum, atomic publish, rollback |
+| PostGIS migration | Applied & smoke-tested | `0001_init.sql` on live Postgres |
+| Dev stack | Running | Docker Desktop + WSL2, serving Pune fixture |
 
-**Not installed:** regional OSM extract, search engine, geocoder, routing engine, tile stack, authentication, map widget. See `docs/known-limitations.md` for what is deliberately refused and why.
+**Not yet installed** (honest limitations, see `docs/known-limitations.md`):
+
+- Regional OSM extract — the import pipeline is built; pointing it at a real Pune extract is the next step
+- Search / geocoding engine — no engine evaluated yet (OG-009)
+- Routing engine — refused with `unsupported_capability`, not approximated
+- Tiles, offline packs, 3D streaming — not implemented
+- Authentication, rate limiting, quotas — not yet; this is a local development deployment
 
 ## Repository layout
 
@@ -179,4 +233,5 @@ See `CONTRIBUTING.md` for commit/PR rules and data rules (OSM-derived data stays
 Code: **Apache-2.0** (`ADR-0009`). OSM-derived data stays under ODbL and remains separate from the code; attribution must stay visible in every client. See `DATA_SOURCES.md` and `THIRD_PARTY_NOTICES.md`.
 
 ---
+
 OpenGeo — deterministic geospatial services. One geography implementation, several surfaces that never re-implement it.
