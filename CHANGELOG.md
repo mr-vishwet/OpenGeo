@@ -27,9 +27,16 @@ beyond what the capability manifest reports.
 - `opengeo.mcp`: tool catalogue with strict JSON Schemas, units, bounds,
   permissions and examples, plus a server-side plan validator enforcing
   operation, schema, permissioned context references, bounds and step budget.
+  An `opengeo-mcp` stdio server publishes the four tools this build can honour.
 - `opengeo.ingestion`: checksum-verified source files, import runs with quality
-  counters, and atomic dataset publication with rollback. Publication is refused
-  above a 20 % rejected-record ratio.
+  counters, atomic dataset publication with rollback, an `opengeo-ingest` gate
+  that counts rejections by reason, and refusal above a 20 % rejected-record
+  ratio.
+- Cross-surface parity: `tests/parity/geometry_vectors.json` is validated by both
+  the Python suite and the Dart suite, and geometry error codes carry the same
+  wire spelling on both sides (`GeoErrorCode.wireCode`).
+- HTTP validation failures carry `details.geometry_code`, and a caller-supplied
+  `x-request-id` is echoed when it is id-safe.
 - PostGIS schema enforcing one active dataset version per region and rejecting
   invalid or empty geometry at insert time.
 - Compose development stack, API image, CI workflow, issue and pull request

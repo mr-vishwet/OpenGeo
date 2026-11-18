@@ -19,6 +19,8 @@ jobs:
         run: ruff check src tests
       - name: Tests
         run: pytest
+      - name: Ingestion gate runs on the shipped fixture
+        run: opengeo-ingest --source data/fixtures/pune_places.geojson
       - name: OpenAPI document builds
         run: python -c "from opengeo.api.app import app; assert app.openapi()['paths']"
 
