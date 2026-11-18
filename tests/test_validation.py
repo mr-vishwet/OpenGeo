@@ -72,11 +72,25 @@ def test_rejects_a_ring_with_too_few_positions():
     assert code_of(exc) is GeoErrorCode.INVALID_RING
 
 
-def test_rejects_a_self_intersecting_ring_as_invalid_geometry():
+def test_rejects_a_self_intersecting_ring():
     bowtie = [[0, 0], [2, 2], [2, 0], [0, 1], [0, 0]]
     with pytest.raises(GeometryError) as exc:
         validate_geometry({"type": "Polygon", "coordinates": [bowtie]})
-    assert code_of(exc) is GeoErrorCode.INVALID_GEOMETRY
+    assert code_of(exc) is GeoErrorCode.SELF_INTERSECTING_RING
+
+
+def test_rejects_a_collinear_ring_as_degenerate():
+    line_ring = [[0, 0], [1, 1], [2, 2], [0, 0]]
+    with pytest.raises(GeometryError) as exc:
+        validate_geometry({"type": "Polygon", "coordinates": [line_ring]})
+    assert code_of(exc) is GeoErrorCode.DEGENERATE_RING
+
+
+def test_rejects_a_hole_outside_its_shell():
+    outside_hole = square(74.0, 18.6, size=0.001)
+    with pytest.raises(GeometryError) as exc:
+        validate_geometry({"type": "Polygon", "coordinates": [square(), outside_hole]})
+    assert code_of(exc) is GeoErrorCode.HOLE_OUTSIDE_SHELL
 
 
 def test_rejects_an_unsupported_type():

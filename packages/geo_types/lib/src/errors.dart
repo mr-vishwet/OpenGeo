@@ -2,17 +2,25 @@
 ///
 /// The codes are part of the public contract: an SDK or agent decides whether
 /// to retry, ask the user to fix input, or switch provider from the code alone,
-/// never by matching message text.
+/// never by matching message text. `wireCode` is the spelling the Python
+/// service puts on the wire, and both surfaces are checked against the same
+/// vectors in `tests/parity/geometry_vectors.json`.
 enum GeoErrorCode {
-  invalidCoordinate,
-  invalidBoundingBox,
-  invalidRing,
-  degenerateRing,
-  selfIntersectingRing,
-  holeOutsideShell,
-  invalidGeometry,
-  unsupportedCrs,
-  malformedGeoJson,
+  invalidCoordinate('invalid_coordinate'),
+  invalidBoundingBox('invalid_bounding_box'),
+  invalidRing('invalid_ring'),
+  degenerateRing('degenerate_ring'),
+  selfIntersectingRing('self_intersecting_ring'),
+  holeOutsideShell('hole_outside_shell'),
+  invalidGeometry('invalid_geometry'),
+  emptyGeometry('empty_geometry'),
+  unsupportedGeometryType('unsupported_geometry_type'),
+  unsupportedCrs('unsupported_crs'),
+  malformedGeoJson('malformed_geojson');
+
+  const GeoErrorCode(this.wireCode);
+
+  final String wireCode;
 }
 
 /// Thrown when an input violates a documented geographic invariant.

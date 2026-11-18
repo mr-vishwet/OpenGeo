@@ -38,6 +38,12 @@ sealed class Geometry {
       );
     }
     final coordinates = json['coordinates'];
+    if (json['crs'] != null) {
+      throw const GeoException(
+        GeoErrorCode.unsupportedCrs,
+        'per-object "crs" is not accepted: GeoJSON interchange is EPSG:4326 only',
+      );
+    }
     switch (type) {
       case 'Point':
         return Point(_pos(coordinates, r'$.coordinates'));
@@ -65,7 +71,7 @@ sealed class Geometry {
         ]);
       default:
         throw GeoException(
-          GeoErrorCode.malformedGeoJson,
+          GeoErrorCode.unsupportedGeometryType,
           'unsupported geometry type "$type"',
         );
     }
@@ -168,6 +174,12 @@ class LineString extends Geometry {
   LineString(List<Coordinate> positions, {Crs crs = Crs.wgs84})
       : positions = List.unmodifiable(positions),
         super(crs) {
+    if (positions.isEmpty) {
+      throw const GeoException(
+        GeoErrorCode.emptyGeometry,
+        'LineString needs at least 2 positions, got 0',
+      );
+    }
     if (positions.length < 2) {
       throw GeoException(GeoErrorCode.invalidGeometry,
           'LineString needs at least 2 positions, got ${positions.length}');
@@ -234,7 +246,7 @@ class MultiPoint extends Geometry {
         super(crs) {
     if (points.isEmpty) {
       throw const GeoException(
-        GeoErrorCode.invalidGeometry,
+        GeoErrorCode.emptyGeometry,
         'MultiPoint needs at least one position',
       );
     }
@@ -266,7 +278,7 @@ class MultiLineString extends Geometry {
         super(crs) {
     if (lines.isEmpty) {
       throw const GeoException(
-        GeoErrorCode.invalidGeometry,
+        GeoErrorCode.emptyGeometry,
         'MultiLineString needs at least one line',
       );
     }
@@ -312,7 +324,7 @@ class MultiPolygon extends Geometry {
         super(crs) {
     if (polygons.isEmpty) {
       throw const GeoException(
-        GeoErrorCode.invalidGeometry,
+        GeoErrorCode.emptyGeometry,
         'MultiPolygon needs at least one polygon',
       );
     }
@@ -353,7 +365,7 @@ class GeometryCollection extends Geometry {
         super(crs) {
     if (geometries.isEmpty) {
       throw const GeoException(
-        GeoErrorCode.invalidGeometry,
+        GeoErrorCode.emptyGeometry,
         'GeometryCollection needs at least one member',
       );
     }
@@ -408,7 +420,7 @@ BoundingBox _boundsOf(List<Coordinate> positions) {
 void _validatePolygonRings(List<List<Coordinate>> rings) {
   if (rings.isEmpty) {
     throw const GeoException(
-      GeoErrorCode.invalidGeometry,
+      GeoErrorCode.invalidRing,
       'Polygon needs a shell ring',
     );
   }

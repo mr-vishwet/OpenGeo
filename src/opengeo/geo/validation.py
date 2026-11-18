@@ -16,7 +16,7 @@ from math import isfinite
 from typing import Any
 
 from shapely.errors import GEOSException
-from shapely.geometry import shape
+from shapely.geometry import LinearRing, Point, Polygon, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.validation import explain_validity
 
@@ -24,12 +24,17 @@ from .coordinates import LonLat
 
 RING_CLOSURE_EPSILON = 1e-9
 
+# Square degrees. Below this a ring is a sliver with no meaningful interior.
+MIN_RING_AREA = 1e-14
+
 
 class GeoErrorCode(StrEnum):
     INVALID_COORDINATE = "invalid_coordinate"
     INVALID_GEOMETRY = "invalid_geometry"
     INVALID_RING = "invalid_ring"
     DEGENERATE_RING = "degenerate_ring"
+    SELF_INTERSECTING_RING = "self_intersecting_ring"
+    HOLE_OUTSIDE_SHELL = "hole_outside_shell"
     EMPTY_GEOMETRY = "empty_geometry"
     UNSUPPORTED_GEOMETRY_TYPE = "unsupported_geometry_type"
     MALFORMED_GEOJSON = "malformed_geojson"
@@ -119,6 +124,35 @@ def _check_rings(rings: Any, path: str) -> None:
         _check_ring(ring, f"{path}[{index}]")
 
 
+def _check_polygon(rings: Any, path: str) -> None:
+    """Ring quality then hole placement, in the same order the Dart SDK uses."""
+    _check_rings(rings, path)
+    for index, ring in enumerate(rings):
+        # Area first: a closed ring that doubles back on itself is also
+        # "not simple", but zero area is the more useful diagnosis.
+        if Polygon(ring).area < MIN_RING_AREA:
+            raise GeometryError(
+                GeoErrorCode.DEGENERATE_RING, "ring encloses zero area",
+                path=f"{path}[{index}]",
+            )
+        if not LinearRing(ring).is_simple:
+            raise GeometryError(
+                GeoErrorCode.SELF_INTERSECTING_RING, "ring crosses itself",
+                path=f"{path}[{index}]",
+            )
+    if len(rings) > 1:
+        shell = Polygon(rings[0])
+        for index, ring in enumerate(rings[1:], start=1):
+            # A hole is placed by its first vertex, then checked for a boundary
+            # crossing; either failure means it is not enclosed by the shell.
+            if not shell.contains(Point(ring[0])) or shell.boundary.intersects(LinearRing(ring)):
+                raise GeometryError(
+                    GeoErrorCode.HOLE_OUTSIDE_SHELL,
+                    f"hole {index - 1} does not lie inside the shell",
+                    path=f"{path}[{index}]",
+                )
+
+
 def _check_coordinates(geometry_type: str, coordinates: Any, path: str) -> None:
     match geometry_type:
         case "Point":
@@ -132,7 +166,7 @@ def _check_coordinates(geometry_type: str, coordinates: Any, path: str) -> None:
                 )
         case "MultiLineString" | "Polygon":
             if geometry_type == "Polygon":
-                _check_rings(coordinates, path)
+                _check_polygon(coordinates, path)
             elif not isinstance(coordinates, (list, tuple)) or not coordinates:
                 raise GeometryError(
                     GeoErrorCode.INVALID_GEOMETRY, "MultiLineString needs at least one line",
@@ -140,7 +174,9 @@ def _check_coordinates(geometry_type: str, coordinates: Any, path: str) -> None:
                 )
             else:
                 for index, line in enumerate(coordinates):
-                    _check_positions(line, f"{path}[{index}]")
+                    _check_positions(
+                        line, f"{path}[{index}]", empty_code=GeoErrorCode.INVALID_GEOMETRY
+                    )
                     if len(line) < 2:
                         raise GeometryError(
                             GeoErrorCode.INVALID_GEOMETRY,
@@ -154,13 +190,15 @@ def _check_coordinates(geometry_type: str, coordinates: Any, path: str) -> None:
                     path=path,
                 )
             for index, polygon in enumerate(coordinates):
-                _check_rings(polygon, f"{path}[{index}]")
+                _check_polygon(polygon, f"{path}[{index}]")
 
 
-def _check_positions(raw: Any, path: str) -> None:
+def _check_positions(
+    raw: Any, path: str, *, empty_code: GeoErrorCode = GeoErrorCode.EMPTY_GEOMETRY
+) -> None:
     if not isinstance(raw, (list, tuple)) or not raw:
         raise GeometryError(
-            GeoErrorCode.INVALID_GEOMETRY, "expected a non-empty array of positions", path=path
+            empty_code, "expected a non-empty array of positions", path=path
         )
     for index, position in enumerate(raw):
         _check_position(position, f"{path}[{index}]")
@@ -187,6 +225,13 @@ def validate_geometry(value: Mapping[str, Any], *, path: str = "geometry") -> Ba
             path=path,
         )
 
+    if value.get("crs") is not None:
+        raise GeometryError(
+            GeoErrorCode.UNSUPPORTED_CRS,
+            'per-object "crs" is not accepted: GeoJSON interchange is EPSG:4326 only',
+            path=path,
+        )
+
     if geometry_type == "GeometryCollection":
         members = value.get("geometries")
         if not isinstance(members, (list, tuple)) or not members:
@@ -202,13 +247,6 @@ def validate_geometry(value: Mapping[str, Any], *, path: str = "geometry") -> Ba
                 GeoErrorCode.MALFORMED_GEOJSON, 'geometry needs a "coordinates" member', path=path
             )
         _check_coordinates(geometry_type, value["coordinates"], f"{path}.coordinates")
-
-    if value.get("crs") is not None:
-        raise GeometryError(
-            GeoErrorCode.UNSUPPORTED_CRS,
-            'per-object "crs" is not accepted: GeoJSON interchange is EPSG:4326 only',
-            path=path,
-        )
 
     try:
         geometry = shape(value)

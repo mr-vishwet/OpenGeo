@@ -135,7 +135,7 @@ void main() {
       expect(
         () => Polygon([]),
         throwsA(isA<GeoException>().having(
-            (e) => e.code, 'code', GeoErrorCode.invalidGeometry)),
+            (e) => e.code, 'code', GeoErrorCode.invalidRing)),
       );
     });
 
@@ -215,7 +215,7 @@ void main() {
       expect(
         () => Geometry.fromGeoJson({'type': 'Circle', 'coordinates': []}),
         throwsA(isA<GeoException>()
-            .having((e) => e.code, 'code', GeoErrorCode.malformedGeoJson)),
+            .having((e) => e.code, 'code', GeoErrorCode.unsupportedGeometryType)),
       );
     });
 

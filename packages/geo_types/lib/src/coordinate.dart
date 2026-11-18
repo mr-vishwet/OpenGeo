@@ -75,7 +75,7 @@ class Coordinate {
   bool equalsWithin(Coordinate other, {double epsilon = 1e-9}) =>
       (longitude - other.longitude).abs() <= epsilon &&
       (latitude - other.latitude).abs() <= epsilon &&
-      (altitude ?? 0) - (other.altitude ?? 0) <= epsilon;
+      ((altitude ?? 0) - (other.altitude ?? 0)).abs() <= epsilon;
 
   @override
   bool operator ==(Object other) =>

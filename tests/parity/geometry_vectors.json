@@ -1,0 +1,208 @@
+{
+  "$comment": "Hand-authored acceptance verdicts for the geometry trust boundary. The Python service and the Dart SDK both validate against this file, so a rule that drifts on either surface fails the other's test suite. `code` is the stable snake_case error code; null means the geometry must be accepted.",
+  "vectors": [
+    {
+      "name": "point_in_pune",
+      "geometry": { "type": "Point", "coordinates": [73.8567, 18.5204] },
+      "code": null
+    },
+    {
+      "name": "point_with_altitude",
+      "geometry": { "type": "Point", "coordinates": [73.85, 18.52, 560] },
+      "code": null
+    },
+    {
+      "name": "point_on_the_range_edges",
+      "geometry": { "type": "Point", "coordinates": [-180, -90] },
+      "code": null
+    },
+    {
+      "name": "linestring_with_two_positions",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[73.8, 18.4], [73.9, 18.6]]
+      },
+      "code": null
+    },
+    {
+      "name": "multilinestring",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [[[73.8, 18.4], [73.9, 18.6]], [[74.0, 18.7], [74.1, 18.8]]]
+      },
+      "code": null
+    },
+    {
+      "name": "multipoint",
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [[73.8, 18.4], [73.9, 18.6]]
+      },
+      "code": null
+    },
+    {
+      "name": "polygon_with_a_hole",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [[73.85, 18.52], [73.86, 18.52], [73.86, 18.53], [73.85, 18.53], [73.85, 18.52]],
+          [[73.854, 18.524], [73.856, 18.524], [73.856, 18.526], [73.854, 18.526], [73.854, 18.524]]
+        ]
+      },
+      "code": null
+    },
+    {
+      "name": "multipolygon",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]],
+          [[[1, 1], [1.01, 1], [1.01, 1.01], [1, 1.01], [1, 1]]]
+        ]
+      },
+      "code": null
+    },
+    {
+      "name": "geometry_collection",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "Point", "coordinates": [73.8567, 18.5204] },
+          { "type": "LineString", "coordinates": [[73.8, 18.4], [73.9, 18.6]] }
+        ]
+      },
+      "code": null
+    },
+    {
+      "name": "longitude_out_of_range",
+      "geometry": { "type": "Point", "coordinates": [181, 18.5204] },
+      "code": "invalid_coordinate"
+    },
+    {
+      "name": "swapped_pair_past_the_latitude_limit",
+      "geometry": { "type": "Point", "coordinates": [18.5204, 99.0] },
+      "code": "invalid_coordinate"
+    },
+    {
+      "name": "position_with_one_number",
+      "geometry": { "type": "Point", "coordinates": [73.8] },
+      "code": "malformed_geojson"
+    },
+    {
+      "name": "position_with_four_numbers",
+      "geometry": { "type": "Point", "coordinates": [73.8, 18.5, 560, 1] },
+      "code": "malformed_geojson"
+    },
+    {
+      "name": "position_with_a_string",
+      "geometry": { "type": "Point", "coordinates": ["73.8", 18.5] },
+      "code": "malformed_geojson"
+    },
+    {
+      "name": "missing_coordinates_member",
+      "geometry": { "type": "Point" },
+      "code": "malformed_geojson"
+    },
+    {
+      "name": "unsupported_geometry_type",
+      "geometry": { "type": "Circle", "coordinates": [] },
+      "code": "unsupported_geometry_type"
+    },
+    {
+      "name": "per_object_crs",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [73.8, 18.5],
+        "crs": { "type": "name", "properties": { "name": "EPSG:3857" } }
+      },
+      "code": "unsupported_crs"
+    },
+    {
+      "name": "open_ring",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01]]]
+      },
+      "code": "invalid_ring"
+    },
+    {
+      "name": "ring_with_three_positions",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0, 0], [1, 0], [0, 0]]]
+      },
+      "code": "invalid_ring"
+    },
+    {
+      "name": "polygon_without_rings",
+      "geometry": { "type": "Polygon", "coordinates": [] },
+      "code": "invalid_ring"
+    },
+    {
+      "name": "degenerate_ring",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0, 0], [1, 1], [2, 2], [0, 0]]]
+      },
+      "code": "degenerate_ring"
+    },
+    {
+      "name": "self_intersecting_ring",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0, 0], [2, 2], [2, 0], [0, 1], [0, 0]]]
+      },
+      "code": "self_intersecting_ring"
+    },
+    {
+      "name": "hole_outside_the_shell",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]],
+          [[2, 2], [2.1, 2], [2.1, 2.1], [2, 2.1], [2, 2]]
+        ]
+      },
+      "code": "hole_outside_shell"
+    },
+    {
+      "name": "hole_crossing_the_shell",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]],
+          [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5], [0.5, 0.5]]
+        ]
+      },
+      "code": "hole_outside_shell"
+    },
+    {
+      "name": "empty_multipoint",
+      "geometry": { "type": "MultiPoint", "coordinates": [] },
+      "code": "empty_geometry"
+    },
+    {
+      "name": "empty_linestring",
+      "geometry": { "type": "LineString", "coordinates": [] },
+      "code": "empty_geometry"
+    },
+    {
+      "name": "empty_geometry_collection",
+      "geometry": { "type": "GeometryCollection", "geometries": [] },
+      "code": "empty_geometry"
+    },
+    {
+      "name": "multilinestring_with_a_single_position_line",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [[[0, 0]]]
+      },
+      "code": "invalid_geometry"
+    },
+    {
+      "name": "linestring_with_a_single_position",
+      "geometry": { "type": "LineString", "coordinates": [[0, 0]] },
+      "code": "invalid_geometry"
+    }
+  ]
+}
