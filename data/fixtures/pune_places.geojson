@@ -1,0 +1,191 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "name": "pune-places-synthetic",
+    "note": "Synthetic fixture authored for OpenGeo tests. Not OpenStreetMap data. Coordinates are approximate real locations; names are used to exercise duplicate-name, multilingual and incomplete-address handling, not as a place database.",
+    "synthetic": true
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8794, 18.5158] },
+      "properties": {
+        "id": "opengeo:fixture:place:0001",
+        "name": "Cafe Goodluck",
+        "name:mr": "कॅफे गुडलक",
+        "category": "cafe",
+        "street": "FC Road",
+        "locality": "Shivajinagar",
+        "region": "Maharashtra",
+        "postal_code": "411005",
+        "country_code": "IN",
+        "house_number": "759/75"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8936, 18.5362] },
+      "properties": {
+        "id": "opengeo:fixture:place:0002",
+        "name": "Cafe Goodluck",
+        "category": "cafe",
+        "street": "North Main Road",
+        "locality": "Koregaon Park",
+        "region": "Maharashtra",
+        "postal_code": "411001",
+        "country_code": "IN",
+        "house_number": "32"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8553, 18.5196] },
+      "properties": {
+        "id": "opengeo:fixture:place:0003",
+        "name": "Shaniwar Wada",
+        "name:mr": "शनिवार वाडा",
+        "category": "attraction",
+        "locality": "Shaniwar Peth",
+        "region": "Maharashtra",
+        "postal_code": "411030",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8544, 18.5161] },
+      "properties": {
+        "id": "opengeo:fixture:place:0004",
+        "name": "Dagdusheth Halwai Ganpati",
+        "name:mr": "दगडूशेठ हलवाई गणपती",
+        "category": "worship",
+        "locality": "Budhwar Peth",
+        "region": "Maharashtra",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8407, 18.5158] },
+      "properties": {
+        "id": "opengeo:fixture:place:0005",
+        "name": "Vaishali",
+        "category": "cafe",
+        "street": "FC Road",
+        "locality": "Shivajinagar",
+        "region": "Maharashtra",
+        "postal_code": "411004",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8415, 18.5152] },
+      "properties": {
+        "id": "opengeo:fixture:place:0006",
+        "name": "German Bakery",
+        "category": "cafe",
+        "street": "Koregaon Road",
+        "locality": "Koregaon Park",
+        "region": "Maharashtra",
+        "postal_code": "411001",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8939, 18.5362] },
+      "properties": {
+        "id": "opengeo:fixture:place:0007",
+        "name": "Koregaon Park",
+        "category": "locality",
+        "region": "Maharashtra",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8744, 18.5285] },
+      "properties": {
+        "id": "opengeo:fixture:place:0008",
+        "name": "Pune Junction",
+        "category": "station",
+        "locality": "Agarkar Nagar",
+        "region": "Maharashtra",
+        "postal_code": "411001",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.9085, 18.5618] },
+      "properties": {
+        "id": "opengeo:fixture:place:0009",
+        "name": "Phoenix Marketcity",
+        "category": "mall",
+        "locality": "Viman Nagar",
+        "region": "Maharashtra",
+        "postal_code": "411014",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.9067, 18.5679] },
+      "properties": {
+        "id": "opengeo:fixture:place:0010",
+        "name": "Symbiosis Institute",
+        "category": "education",
+        "locality": "Viman Nagar",
+        "region": "Maharashtra",
+        "postal_code": "411014",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.85, 18.53] },
+      "properties": {
+        "id": "opengeo:fixture:place:0011",
+        "category": "residential",
+        "region": "Maharashtra",
+        "country_code": "IN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.83, 18.5],
+            [73.9, 18.5],
+            [73.9, 18.55],
+            [73.83, 18.55],
+            [73.83, 18.5]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "opengeo:fixture:region:0001",
+        "name": "Central Pune (synthetic test area)",
+        "category": "administrative",
+        "region": "Maharashtra",
+        "country_code": "IN",
+        "synthetic": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.8, 18.4] },
+      "properties": {
+        "id": "opengeo:fixture:place:0012",
+        "name": "Far Edge Cafe",
+        "category": "cafe",
+        "locality": "Outside the city centre",
+        "region": "Maharashtra",
+        "country_code": "IN"
+      }
+    }
+  ]
+}
