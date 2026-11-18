@@ -63,6 +63,19 @@ flowchart TD
 
 `GET /v1/capabilities` is the authority on what works — `implemented` means exercised by the test suite; `unavailable` means refused, never approximated.
 
+## What you can build with OpenGeo
+
+Sixteen use cases the platform is designed to serve. The grid below is a **reference layout** — replace each placeholder with a real screenshot once the MapLibre/Flutter client and the regional Pune extract are in place.
+
+| | | | |
+|---|---|---|---|
+| 📍 **1. Nearby POI search**<br>“What cafés are within 2 km of Shivajinagar?” | 📏 **2. Straight-line distance**<br>“How far is Cafe Goodluck from Pune Junction?” | 🏠 **3. Point-in-region check**<br>“Is this address inside the Pune municipal boundary?” | 🔗 **4. Line-region intersection**<br>“Does this delivery route cross the restricted zone?” |
+| 🗺️ **5. Dataset versioning**<br>“Serve the Pune extract from 14 Nov; roll back if bad.” | ✅ **6. Boundary-in vs boundary-on**<br>“`contains` excludes the edge; `covers` includes it.” | 🧩 **7. Multi-region rollout**<br>“Pune first, then Bengaluru — one active version per region.” | 🤖 **8. Agent tool access**<br>“MCP server lets an AI agent call `geo.nearby` over stdio.” |
+| 📥 **9. Extract ingestion gate**<br>“Reject an OSM extract if >20 % of features fail validation.” | 🔐 **10. Stable error codes**<br>“`invalid_ring` vs `self_intersecting_ring` — branch on code, not message.” | 📊 **11. Capability manifest**<br>“`GET /v1/capabilities` tells a client what this deployment refuses.” | 📈 **12. Latency baseline**<br>“`benchmarks/run_baseline.py` records p50/p95/p99 with commit + hardware.” |
+| 🧪 **13. Cross-surface parity**<br>“Python and Dart judge the same 29 geometry vectors identically.” | 🗄️ **14. PostGIS authority**<br>“Serve from PostGIS via `OPENGEO_STORE=postgis`; GiST index on geography.” | 📦 **15. Atomic publication**<br>“`publish_dataset_version()` flips the active version in one transaction.” | 🇮🇳 **16. Indian metros roadmap**<br>“Pune → Bengaluru → other metros (ADR-0010, Pune first).” |
+
+> **Real screenshots coming.** These 16 cells are ready for actual MapLibre/Flutter UI screenshots. Once the client SDK and a regional Pune extract exist, swap each placeholder for a real screenshot and update this grid.
+
 ## Quickstart
 
 ### Run the API
