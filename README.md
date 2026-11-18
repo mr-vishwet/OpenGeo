@@ -9,8 +9,23 @@ never committed.
 
 ## Status
 
-Phase 0 — repository baseline. No feature is complete until it has tests, docs and an
-observable failure mode.
+Phase 1 — the spatial core runs and is tested; the data plane is not installed.
+
+Working today:
+
+- **HTTP service** (`opengeo-api`): capability manifest, dataset metadata, place lookup,
+  nearby search, geodesic distance, `contains`/`covers` and `intersects` predicates. Every
+  response carries request id, dataset version, provenance and warnings.
+- **MCP server** (`opengeo-mcp`, stdio): the four spatial tools this build can actually
+  honour. Routing, geocoding and isochrones are absent rather than stubbed.
+- **Dart SDK** (`packages/geo_types`): coordinate, CRS, bounding box, distance and the seven
+  geometry types, validated at construction.
+
+Not installed: Docker, PostGIS, a regional OSM extract, any search, geocoding or routing
+engine, and any tile stack. `GET /v1/capabilities` is the authority on what runs, and
+[`docs/known-limitations.md`](docs/known-limitations.md) says what does not.
+
+No feature counts as complete until it has tests, docs and an observable failure mode.
 
 ## Layout
 
@@ -18,16 +33,15 @@ The tree is grown phase by phase rather than scaffolded empty. Directories appea
 their milestone starts.
 
 ```
+src/opengeo/            the single Python distribution
+  api/                  FastAPI service: routes, envelope, errors, fixture store
+  geo/                  units, geodesy, validation boundary, predicates
+  ingestion/            checksummed manifests, atomic publish, rollback
+  mcp/                  tool catalogue, plan validator, stdio server
 packages/geo_types/     canonical coordinate, CRS, bbox and geometry types (Dart)
-packages/               shared contracts: geo-query, geo-context, provider-contracts, client-core
-apps/api/               spatial + search + routing HTTP service
-apps/mcp/               MCP adapter over the same application services
-apps/ingestion/         OSM extract → normalized, versioned dataset
-services/               spatial, search, geocoding, routing, tiles
-sdk/                    flutter, android, ios, web
-integrations/           unity, unreal
-infrastructure/         Compose, CI, deployment
-benchmarks/             OpenGeoBench tracks and fixtures
+tests/                  Python suite plus the shared parity vectors
+infrastructure/         Compose, PostGIS migration, API image
+benchmarks/             OpenGeoBench baseline runner
 docs/                   public documentation
 adr/                    architecture decision records
 ```
@@ -39,25 +53,36 @@ renderer, a database or an HTTP client.
 ## Prerequisites
 
 See `.docs/PREREQUISITES.md` for the full inventory, measured host readiness and the ordered
-acquisition plan. The short version: Git, Dart/Flutter and Python are present; Docker,
-PostGIS, a regional OSM extract and the backend-language decision are not.
+acquisition plan. The short version: Git, Dart/Flutter and Python 3.13 are present; Docker,
+PostGIS, a regional OSM extract and every search/routing/tile engine are not.
 
 ## Development
 
 ```bash
-# Dart packages
-dart pub get
-dart test
+# Python: API, MCP server, tests
+py -3.13 -m venv .venv
+.venv/Scripts/activate
+pip install -e ".[dev]"
+pytest
+ruff check src tests
 
-# Python tooling
-python -m venv .venv && .venv/Scripts/activate
-pip install -r requirements-dev.txt
+# Dart SDK
+cd packages/geo_types && dart pub get && dart test
+```
 
-# Core services (requires Docker)
+`tests/parity/geometry_vectors.json` is validated by both suites, so the SDK and the service
+cannot drift apart silently.
+
+Core services (requires Docker, not present on this host yet):
+
+```bash
+cp .env.example .env            # set POSTGRES_PASSWORD
 docker compose -f infrastructure/compose.dev.yml up -d
 ```
 
 ## Licensing
 
-Not yet decided — see PRD §44/§55. OSM-derived data carries ODbL obligations; attribution must
-remain visible in every client. Do not redistribute derived databases without review.
+Code: **Apache-2.0** ([ADR-0009](adr/0009-apache-2-license.md)). OSM-derived data stays under
+ODbL and remains separate from the code; attribution must stay visible in every client. Do not
+redistribute a derived database without reviewing
+[`DATA_SOURCES.md`](DATA_SOURCES.md) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

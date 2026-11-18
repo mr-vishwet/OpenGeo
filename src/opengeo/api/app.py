@@ -11,6 +11,7 @@ import time
 import uuid
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from re import compile as compile_pattern
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -49,6 +50,10 @@ from .models import (
 )
 
 API_VERSION = "v1"
+
+# 8-64 characters of an id-safe alphabet: enough to correlate, nothing that can
+# escape into a log line.
+_REQUEST_ID = compile_pattern(r"[A-Za-z0-9._-]{8,64}")
 
 
 def _meta(request: Request, store: FeatureStore | None = None) -> Meta:
@@ -120,7 +125,12 @@ def create_app(store_factory: Callable[[], FeatureStore] = load_default_store) -
 
     @app.middleware("http")
     async def stamp_request(request: Request, call_next):
-        request.state.request_id = uuid.uuid4().hex
+        # Echo a caller-supplied id so a client report and a log line meet, but
+        # only in a shape that cannot inject into a log.
+        supplied = request.headers.get("x-request-id", "")
+        request.state.request_id = (
+            supplied if _REQUEST_ID.fullmatch(supplied) else uuid.uuid4().hex
+        )
         request.state.started = time.perf_counter()
         response = await call_next(request)
         response.headers["X-Request-Id"] = request.state.request_id

@@ -46,6 +46,18 @@ def test_every_response_carries_a_request_id_header(client: TestClient):
     assert response.json()["meta"]["request_id"] == response.headers["X-Request-Id"]
 
 
+def test_a_caller_supplied_request_id_is_echoed(client: TestClient):
+    response = client.get("/v1/datasets", headers={"x-request-id": "ci-run-42.abc"})
+    assert response.headers["X-Request-Id"] == "ci-run-42.abc"
+    assert response.json()["meta"]["request_id"] == "ci-run-42.abc"
+
+
+def test_a_request_id_that_could_inject_into_a_log_is_replaced(client: TestClient):
+    response = client.get("/v1/datasets", headers={"x-request-id": "abc\nforged line"})
+    assert response.headers["X-Request-Id"] != "abc\nforged line"
+    assert len(response.headers["X-Request-Id"]) == 32
+
+
 def test_envelope_has_the_documented_members(client: TestClient):
     body = client.get("/v1/datasets").json()
     assert set(body) == {"data", "meta", "provenance", "warnings"}

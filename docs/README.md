@@ -3,6 +3,8 @@
 Start here:
 
 - [Quickstart](quickstart.md) — run the API, call it, read the envelope.
+- [HTTP contract](api.md) — envelope semantics, error taxonomy, distance and
+  predicate rules.
 - [Known limitations](known-limitations.md) — what is not built, and what is
   deliberately refused.
 - [`../adr/`](../adr/) — every architecture decision with its alternatives.
