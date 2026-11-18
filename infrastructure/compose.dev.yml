@@ -1,0 +1,50 @@
+# Local development stack.
+#
+# Authored, not yet run: this host has no Docker or WSL2 installed. Treat the
+# first `docker compose up` as a task with its own acceptance check, not as a
+# known-good command.
+#
+# No default password. Export POSTGRES_PASSWORD (see .env.example) or the stack
+# refuses to start, which is the point.
+
+name: opengeo
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-opengeo}
+      POSTGRES_USER: ${POSTGRES_USER:-opengeo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - opengeo-db-data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-opengeo} -d ${POSTGRES_DB:-opengeo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.api
+    environment:
+      OPENGEO_FIXTURE: /app/data/fixtures/pune_places.geojson
+      DATABASE_URL: postgresql://${POSTGRES_USER:-opengeo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-opengeo}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8080}:8080"
+    healthcheck:
+      test:
+        ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  opengeo-db-data:
