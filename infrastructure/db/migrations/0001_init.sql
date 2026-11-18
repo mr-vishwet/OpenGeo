@@ -6,6 +6,11 @@
 
 BEGIN;
 
+-- Geometry types must exist before the first table using them. The base image
+-- ships both extensions; creation is idempotent so this file also runs on a
+-- stock Postgres with PostGIS already enabled by an operator.
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 CREATE SCHEMA IF NOT EXISTS opengeo;
 
 -- ── data governance ─────────────────────────────────────────────────────────

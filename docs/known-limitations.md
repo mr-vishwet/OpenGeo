@@ -14,8 +14,8 @@ commit, not a roadmap aspiration.
 
 ## Services
 
-- PostGIS is not attached. Predicates run on GEOS in-process, with no spatial
-  index: `nearby` is a linear scan.
+- PostGIS is running but unused. Predicates still run on GEOS in-process with no
+  spatial index: `nearby` is a linear scan, and the database contains no places.
 - `network_travel` distance, routing, isochrones and map matching are unavailable
   and are refused with `unsupported_capability` rather than approximated.
 - Geocoding and search are unavailable. No engine has been evaluated (OG-009).
@@ -51,8 +51,13 @@ commit, not a roadmap aspiration.
 
 ## Operations
 
-- `infrastructure/compose.dev.yml` has never been run: this machine has no Docker
-  and no WSL2. Treat the first `up` as untested.
-- No backup/restore has been performed, because there is no database yet.
+- The dev stack runs on this host: Docker Desktop 4.99 + WSL2 (Ubuntu). PostGIS
+  16 is healthy and migration `0001_init.sql` applies on a fresh volume. The
+  atomic-publication invariant was smoke-verified: `publish_dataset_version()`
+  flips the active version per region, and a direct update forcing two active
+  versions is rejected by the `dataset_version_one_active_per_region` index.
+- The API does not use the database yet: `FeatureStore` is still the GeoJSON
+  fixture. `opengeo.place` is empty of places.
+- No backup/restore has been performed.
 - CI configuration has not executed on a remote runner. It is written against
   the commands that pass locally.

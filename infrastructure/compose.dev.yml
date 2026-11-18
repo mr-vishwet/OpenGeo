@@ -1,11 +1,13 @@
 # Local development stack.
 #
-# Authored, not yet run: this host has no Docker or WSL2 installed. Treat the
-# first `docker compose up` as a task with its own acceptance check, not as a
-# known-good command.
+# First run verified 2026-11-19 on Windows 11 + WSL2 + Docker Desktop 4.99:
+# `docker compose -f infrastructure/compose.dev.yml --env-file .env up -d`
+# brings up PostGIS 16 and the API, and the migration applies cleanly.
 #
 # No default password. Export POSTGRES_PASSWORD (see .env.example) or the stack
 # refuses to start, which is the point.
+# Note: run from the repository root with `--env-file .env`; the compose file
+# itself does not find the root .env on its own.
 
 name: opengeo
 

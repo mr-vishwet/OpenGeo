@@ -82,8 +82,13 @@ regional extract. When those exist:
 
 ```bash
 cp .env.example .env            # set POSTGRES_PASSWORD
-docker compose -f infrastructure/compose.dev.yml up -d
+docker compose -f infrastructure/compose.dev.yml --env-file .env up -d
 ```
+
+The migration mounts into `/docker-entrypoint-initdb.d` and requires an empty
+database volume; if it fails partway, `docker compose ... down -v` and start
+again. `--env-file .env` is needed because the compose file does not find the
+root `.env` on its own.
 
 The migration in `infrastructure/db/migrations/0001_init.sql` enforces one active
 dataset version per region and rejects invalid geometry at insert time.
