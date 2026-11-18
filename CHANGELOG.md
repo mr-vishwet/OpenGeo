@@ -44,6 +44,23 @@ beyond what the capability manifest reports.
 - OpenGeoBench baseline script recording commit, dataset version, dependency
   versions and hardware with p50/p95/p99.
 
+### Fixed
+
+- Antimeridian-aware `BoundingBox.union`: a wrapped box merged with a normal one no longer
+  loses its wrap.
+- `Coordinate.equalsWithin` compared a signed altitude delta, so any negative difference
+  passed as equal.
+- HTTP requests that set both container forms or both candidate forms are refused instead of
+  answered with a silent precedence rule.
+- `within_radius` rejects an unknown boundary policy instead of silently excluding edges.
+- Geometry error codes were aligned between the service and the SDK (`degenerate_ring`,
+  `self_intersecting_ring`, `hole_outside_shell` on both sides; `empty_geometry` and
+  `unsupported_geometry_type` on both sides).
+- Validation failures carry `details.geometry_code`.
+- The capability manifest's fixture warning and MCP note no longer invent facts; implemented
+  capabilities are tied to served routes by test.
+- `shapely` is a runtime dependency.
+
 ### Known limitations
 
 See `docs/known-limitations.md`. The short version: synthetic 13-feature
