@@ -1,0 +1,99 @@
+# ── Internal workspace: never committed ─────────────────────────────────────
+# All planning, ADR drafts, agent transcripts, extracted specs and research
+# notes live here. The repo history carries code and public docs only.
+.docs/
+
+# ── Agentic / tool-local state ──────────────────────────────────────────────
+.agents/
+.agent/
+.opencode/
+.claude/
+.cursor/
+.continue/
+.aider*
+.gemini/
+.windsurf/
+.qoder/
+.roo/
+.obsidian/
+prompts/local/
+*.agent.md
+
+# ── Secrets ─────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+secrets/
+
+# ── Dart / Flutter ──────────────────────────────────────────────────────────
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+*.iml
+
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ── Node ────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+.yarn/
+dist/
+
+# ── Go ──────────────────────────────────────────────────────────────────────
+bin/
+*.exe
+*.test
+*.out
+
+# ── Android / Gradle ────────────────────────────────────────────────────────
+.gradle/
+local.properties
+captures/
+*.apk
+*.aab
+
+# ── Data: extracts and derived artifacts are delivered separately ───────────
+data/local/
+data/raw/
+*.pbf
+*.osm
+*.mbtiles
+*.pmtiles
+*.mvt
+*.parquet
+*.gpkg
+
+# ── Benchmark / import output ───────────────────────────────────────────────
+results.tsv
+benchmark-results/
+
+# ── Editors and OS ──────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ── Logs and temp ───────────────────────────────────────────────────────────
+*.log
+tmp/
+.cache/
