@@ -95,6 +95,8 @@ def within_radius(
     """
     if radius_m <= 0:
         raise ValueError("radius must be positive")
+    if boundary not in ("contains", "covers"):
+        raise ValueError(f"unsupported radius boundary '{boundary}'")
     hits: list[tuple[str, float]] = []
     for feature_id, geometry in candidates:
         if geometry.geom_type != "Point":

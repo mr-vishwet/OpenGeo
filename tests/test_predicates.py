@@ -99,6 +99,12 @@ def test_within_radius_rejects_a_non_positive_radius():
         within_radius(LonLat(0, 0), 0, [])
 
 
+def test_within_radius_rejects_an_unknown_boundary_policy():
+    # A typo must not silently fall back to excluding the boundary.
+    with pytest.raises(ValueError):
+        within_radius(LonLat(0, 0), 1000, [], boundary="coverss")
+
+
 def test_within_radius_rejects_polygon_candidates_in_the_reference_path():
     center = LonLat(73.8567, 18.5204)
     with pytest.raises(ValueError):
