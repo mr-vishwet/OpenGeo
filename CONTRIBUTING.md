@@ -7,15 +7,20 @@ behaviour, it is a breaking change and needs an ADR plus a migration note.
 ## Local setup
 
 ```bash
-dart pub get                     # Dart packages
-dart test
-
+# Python: API, MCP server, ingestion gate, tests
 python -m venv .venv
 .venv/Scripts/activate           # Windows
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 pytest
+ruff check src tests
 
-docker compose -f infrastructure/compose.dev.yml up -d   # when the stack is enabled
+# Dart SDK
+cd packages/geo_types
+dart pub get
+dart test
+
+# Docker stack (requires Docker Desktop and WSL2)
+docker compose -f infrastructure/compose.dev.yml up -d
 ```
 
 ## Definition of done

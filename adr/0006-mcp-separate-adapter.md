@@ -12,10 +12,10 @@ for distance, containment and provenance.
 
 ## Decision
 
-`apps/mcp` is a separately deployable process that calls the same application service interfaces
-as REST. It contains no geographic business logic. Every tool has a narrow purpose, a strict JSON
-Schema, declared units, bounds, defaults, permission requirements, example calls and an output
-limit. Tool names and schemas are versioned and pinned to one MCP protocol version.
+`src/opengeo/mcp` is a separately runnable process that calls the same application service
+interfaces as REST. It contains no geographic business logic. Every tool has a narrow purpose, a
+strict JSON Schema, declared units, bounds, defaults, permission requirements, example calls and
+an output limit. Tool names and schemas are versioned and pinned to one MCP protocol version.
 
 The server must be tested against at least two independent MCP clients. Model output is proposed
 as a typed plan and validated server-side against schema, coordinate order, CRS, units, radius
@@ -39,6 +39,9 @@ change without touching HTTP contracts.
 
 **Follow-ups.** Conformance tests against two clients; plan validator test suite; capability
 manifest exposed as an MCP resource.
+
+**Open.** The server is exercised through the official `mcp` SDK only. Conformance against a
+second independent client, and the capability-manifest resource, are not done.
 
 ## Review trigger
 

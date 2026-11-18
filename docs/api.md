@@ -70,7 +70,10 @@ answer states the rule it used.
 
 ## Refusals
 
-`GET /v1/capabilities` is the authority on what works. `state: "available"`
-means the path is configured and exercised; `"unavailable"` means the request
-will be refused. A capability is never reported as available because a
-dependency might be installed later.
+`GET /v1/capabilities` is the authority on what works. `state: "implemented"`
+means a request to that path is exercised by the test suite; `"configured"` and
+`"region_available"` are reserved for deployments that attach a real backend;
+`"requires_optional_module"` and `"requires_external_provider"` mean the path
+exists but the dependency is absent, so the call is refused;
+`"unavailable"` and `"planned"` mean there is nothing to call. A capability is
+never reported as implemented because a dependency might be installed later.

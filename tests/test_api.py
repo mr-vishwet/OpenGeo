@@ -40,6 +40,26 @@ def test_readiness_reports_missing_index_and_database(client: TestClient):
     assert body["checks"]["database"] == "not_attached"
 
 
+def test_every_implemented_capability_has_a_route(client: TestClient):
+    routes = {
+        "spatial.distance": "/v1/spatial/distance",
+        "spatial.contains": "/v1/spatial/contains",
+        "spatial.covers": "/v1/spatial/contains",
+        "spatial.intersects": "/v1/spatial/intersects",
+        "nearby": "/v1/nearby",
+        "places.get": "/v1/places/{feature_id}",
+    }
+    manifest = client.get("/v1/capabilities").json()
+    implemented = {
+        capability["name"]
+        for capability in manifest["capabilities"]
+        if capability["state"] == "implemented"
+    }
+    assert implemented == set(routes)
+    served = {route.path for route in client.app.routes}
+    assert set(routes.values()) <= served
+
+
 def test_every_response_carries_a_request_id_header(client: TestClient):
     response = client.get("/v1/datasets")
     assert response.headers["X-Request-Id"]

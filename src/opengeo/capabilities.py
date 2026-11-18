@@ -123,7 +123,7 @@ def build_manifest(store: FeatureStore) -> CapabilityManifest:
         Capability(
             name="mcp",
             state=CapabilityState.REQUIRES_MODULE,
-            note="Tool schemas exist; the MCP transport adapter is not deployed here.",
+            note="stdio server publishes four spatial tools; no network transport is deployed.",
         ),
     ]
 
@@ -154,7 +154,7 @@ def build_manifest(store: FeatureStore) -> CapabilityManifest:
         ],
         capabilities=capabilities,
         warnings=[
-            "This deployment serves a synthetic 12-feature fixture, not a regional extract.",
+            "This deployment serves a synthetic fixture, not a regional extract.",
             "No spatial index is in use. Latency and result quality claims are not valid here.",
         ],
     )
