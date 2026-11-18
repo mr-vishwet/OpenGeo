@@ -103,7 +103,7 @@ def bench_pure_python(iterations: int) -> dict:
 
     return {
         "geodesic_distance": percentiles(geodesic),
-        "nearby_scan_12_features": percentiles(nearby),
+        "nearby_scan_fixture_features": percentiles(nearby),
         "plan_validation": percentiles(validation),
     }
 

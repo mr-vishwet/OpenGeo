@@ -1,0 +1,55 @@
+{
+  "environment": {
+    "measured_at": "2026-11-18T19:36:12+00:00",
+    "opengeo_version": "0.1.0",
+    "commit": "3731ef3",
+    "python": "3.13.1",
+    "shapely": "2.2.0",
+    "os": "Windows 11",
+    "machine": "AMD64",
+    "cpu_count": 12,
+    "dataset_version": "fixture-1d84513a8f93",
+    "dataset_features": 13,
+    "authoritative_store": "geojson-fixture (no PostGIS, no spatial index)"
+  },
+  "pure_python": {
+    "geodesic_distance": {
+      "p50_ms": 0.013,
+      "p95_ms": 0.015,
+      "p99_ms": 0.024,
+      "mean_ms": 0.013
+    },
+    "nearby_scan_fixture_features": {
+      "p50_ms": 0.156,
+      "p95_ms": 0.178,
+      "p99_ms": 0.178,
+      "mean_ms": 0.163
+    },
+    "plan_validation": {
+      "p50_ms": 0.132,
+      "p95_ms": 0.176,
+      "p99_ms": 0.211,
+      "mean_ms": 0.152
+    }
+  },
+  "http": {
+    "nearby_http_cold_ms": 8.787,
+    "nearby_http": {
+      "p50_ms": 6.129,
+      "p95_ms": 6.64,
+      "p99_ms": 6.745,
+      "mean_ms": 6.135
+    },
+    "distance_http": {
+      "p50_ms": 5.991,
+      "p95_ms": 6.885,
+      "p99_ms": 7.041,
+      "mean_ms": 6.02
+    },
+    "note": "in-process ASGI client; excludes network and TLS"
+  },
+  "limits": [
+    "Fixture store, no spatial index, no database.",
+    "Numbers describe this laptop, not a deployment."
+  ]
+}
