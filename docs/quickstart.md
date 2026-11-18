@@ -96,8 +96,8 @@ dataset version per region and rejects invalid geometry at insert time.
 ## Tests
 
 ```bash
-pytest                                   # Python: 133 tests
-cd packages/geo_types && dart test       # Dart: 76 tests
+pytest                                   # Python: 147 tests (+2 skipped without Postgres)
+cd packages/geo_types && dart test       # Dart: 79 tests
 ```
 
 Both suites validate `tests/parity/geometry_vectors.json`: hand-written verdicts

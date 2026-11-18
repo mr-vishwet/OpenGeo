@@ -7,15 +7,20 @@ commit, not a roadmap aspiration.
 
 - The served dataset is a **13-feature synthetic fixture** around Pune. It is not
   OpenStreetMap data and not a place database.
-- No regional OSM extract has been imported. There is no search index, no
-  routing graph and no tile archive.
+- No regional OSM extract has been imported yet. Fetching one needs osmium/PBF
+  tooling (not available on this Windows host without a C++ toolchain) or an
+  Overpass→GeoJSON conversion step. The import pipeline
+  (`opengeo.ingestion.postgis.import_collection`, `opengeo-ingest`) is built and
+  proven against the fixture; pointing it at a real extract is the remaining step.
 - Indian address data in OSM is uneven. A search baseline measured against Pune
   measures coverage as much as engine quality.
 
 ## Services
 
-- PostGIS is running but unused. Predicates still run on GEOS in-process with no
-  spatial index: `nearby` is a linear scan, and the database contains no places.
+- PostGIS 16 is attached and the dev stack serves the imported Pune fixture
+  through a geography GiST expression index; `nearby` uses `ST_DWithin(geography)`.
+  The API defaults to the GeoJSON fixture and only uses PostGIS when
+  `OPENGEO_STORE=postgis` is set.
 - `network_travel` distance, routing, isochrones and map matching are unavailable
   and are refused with `unsupported_capability` rather than approximated.
 - Geocoding and search are unavailable. No engine has been evaluated (OG-009).
@@ -53,11 +58,16 @@ commit, not a roadmap aspiration.
 
 - The dev stack runs on this host: Docker Desktop 4.99 + WSL2 (Ubuntu). PostGIS
   16 is healthy and migration `0001_init.sql` applies on a fresh volume. The
-  atomic-publication invariant was smoke-verified: `publish_dataset_version()`
-  flips the active version per region, and a direct update forcing two active
-  versions is rejected by the `dataset_version_one_active_per_region` index.
-- The API does not use the database yet: `FeatureStore` is still the GeoJSON
-  fixture. `opengeo.place` is empty of places.
+  stack is started with `docker compose -f infrastructure/compose.dev.yml
+  --env-file .env up -d`. The atomic-publication invariant was smoke-verified:
+  `publish_dataset_version()` flips the active version per region, and a direct
+  update forcing two active versions is rejected by the
+  `dataset_version_one_active_per_region` index.
+- The API defaults to the GeoJSON fixture; set `OPENGEO_STORE=postgis` and
+  `OPENGEO_DATABASE_URL` to serve the active PostGIS dataset version instead.
+  The running dev stack is configured this way and serves the imported Pune
+  fixture through a geography GiST index.
 - No backup/restore has been performed.
 - CI configuration has not executed on a remote runner. It is written against
-  the commands that pass locally.
+  the commands that pass locally, including a PostGIS service job that applies
+  the migration and runs the publication smoke test.
