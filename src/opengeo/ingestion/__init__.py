@@ -13,8 +13,10 @@ from .manifest import (
     sha256_of,
     verify_source,
 )
+from .quality import Assessment, assess
 
 __all__ = [
+    "Assessment",
     "Counts",
     "DatasetRegistry",
     "DatasetVersion",
@@ -24,6 +26,7 @@ __all__ = [
     "Rejection",
     "RunStatus",
     "SourceRef",
+    "assess",
     "sha256_of",
     "verify_source",
 ]

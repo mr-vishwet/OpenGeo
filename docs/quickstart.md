@@ -99,6 +99,17 @@ Both suites validate `tests/parity/geometry_vectors.json`: hand-written verdicts
 for the geometry trust boundary. A validation rule that drifts on one surface
 fails the other.
 
+## Check an extract before importing it
+
+```bash
+opengeo-ingest --source data/raw/pune.osm.geojson --sha256 <hex> --json
+```
+
+The gate validates every feature through the same trust boundary the API uses,
+counts rejections by reason, and exits non-zero when more than 20% of records
+would be rejected. Nothing is repaired silently: a closed-by-hand ring or a
+pulled-in vertex hides a bug in the producer.
+
 ## Expose the tools to an agent
 
 ```bash
