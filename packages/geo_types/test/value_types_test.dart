@@ -144,6 +144,33 @@ void main() {
       expect(a.union(b),
           BoundingBox(west: 0, south: 0, east: 3, north: 3));
     });
+
+    test('union with a wrapped box stays wrapped when that is shorter', () {
+      final across = BoundingBox(west: 170, south: -10, east: -170, north: 10);
+      final nearby = BoundingBox(west: 175, south: -5, east: 178, north: 5);
+      final union = across.union(nearby);
+      expect(union.crossesAntimeridian, isTrue);
+      expect(union.west, 170);
+      expect(union.east, -170);
+    });
+
+    test('union of two wrapped boxes keeps the shorter arc', () {
+      final a = BoundingBox(west: 170, south: 0, east: -170, north: 1);
+      final b = BoundingBox(west: -175, south: 0, east: -160, north: 1);
+      final union = a.union(b);
+      expect(union.crossesAntimeridian, isTrue);
+      expect(union.west, 170);
+      expect(union.east, -160);
+    });
+
+    test('union of a wrapped box and a box on the far side covers both', () {
+      final across = BoundingBox(west: 170, south: 0, east: -170, north: 1);
+      final far = BoundingBox(west: 0, south: 0, east: 10, north: 1);
+      final union = across.union(far);
+      expect(union.west, 0);
+      expect(union.east, -170);
+      expect(union.longitudeSpan, 190);
+    });
   });
 
   group('Distance', () {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'coordinate.dart';
 import 'errors.dart';
 
@@ -73,24 +75,37 @@ class BoundingBox {
   BoundingBox union(BoundingBox other) {
     final south = this.south < other.south ? this.south : other.south;
     final north = this.north > other.north ? this.north : other.north;
-
-    final directWest = _min(west, other.west);
-    final directEast = _max(east, other.east);
-    final directSpan = directEast - directWest;
-
-    final wrappedWest = _max(west, other.west);
-    final wrappedEast = _min(east, other.east);
-    final wrappedSpan = wrappedWest + (180 - wrappedEast);
-
-    return wrappedSpan < directSpan && wrappedSpan <= 180
-        ? BoundingBox(
-            west: wrappedWest, south: south, east: wrappedEast, north: north)
-        : BoundingBox(
-            west: directWest, south: south, east: directEast, north: north);
+    final merged = _unionLongitudes(west, east, other.west, other.east);
+    return BoundingBox(
+        west: merged.$1, south: south, east: merged.$2, north: north);
   }
 
-  static double _min(double a, double b) => a < b ? a : b;
-  static double _max(double a, double b) => a > b ? a : b;
+  /// Both boxes must be covered by one arc, so measure eastward from each
+  /// candidate start and keep the shorter arc. This handles a wrapped box next
+  /// to a normal one without special cases.
+  static (double, double) _unionLongitudes(
+      double westA, double eastA, double westB, double eastB) {
+    final spanA = _spanOf(westA, eastA);
+    final spanB = _spanOf(westB, eastB);
+    double eastOf(double start, double lon) => (lon - start) % 360;
+
+    var bestStart = westA;
+    var bestSpan = 360.0;
+    for (final start in [westA, westB]) {
+      final span = math.max(eastOf(start, westA) + spanA, eastOf(start, westB) + spanB);
+      if (span < bestSpan) {
+        bestSpan = span;
+        bestStart = start;
+      }
+    }
+    if (bestSpan >= 360) return (-180, 180);
+    var east = bestStart + bestSpan;
+    if (east > 180) east -= 360;
+    return (bestStart, east);
+  }
+
+  static double _spanOf(double west, double east) =>
+      west > east ? (180 - west) + (east + 180) : east - west;
 
   @override
   bool operator ==(Object other) =>
