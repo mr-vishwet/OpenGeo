@@ -162,9 +162,10 @@ def validate_plan(
         if not isinstance(raw, Mapping):
             raise PlanError(PlanErrorCode.INVALID_PLAN, "each step must be an object", step=index)
         step = _validate_step(index, raw, granted_context)
-        if step.operation == "geo.distance" and step.context_refs:
+        if step.context_refs:
             warnings.append(
-                "distance with a context reference needs an authorised position at execution time"
+                f"{step.operation} resolves a position at execution time; bounds on that "
+                "position can only be checked then"
             )
         steps.append(step)
 

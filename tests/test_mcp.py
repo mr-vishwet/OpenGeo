@@ -42,6 +42,19 @@ def test_radius_has_a_documented_ceiling():
     assert limit == 50_000
 
 
+def test_a_context_resolved_step_says_bounds_are_checked_at_execution():
+    plan = validate_plan(
+        {
+            "operation": "nearby",
+            "center": {"context_ref": "authorized-user-location"},
+            "radius": {"value": 1200, "unit": "m"},
+        },
+        granted_context=LOCATION,
+    )
+    assert plan.warnings
+    assert "execution time" in plan.warnings[0]
+
+
 def test_accepts_a_valid_single_step_plan():
     plan = validate_plan(
         {
