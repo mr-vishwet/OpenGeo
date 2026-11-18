@@ -230,6 +230,33 @@ def test_contains_rejects_an_open_ring_with_a_stable_code(client: TestClient):
     assert response.json()["errors"][0]["details"] == {"geometry_code": "invalid_ring"}
 
 
+def test_contains_rejects_two_ways_of_naming_the_container(client: TestClient):
+    # Answering with one of them silently would answer a different question.
+    response = client.post(
+        "/v1/spatial/contains",
+        json={
+            "container": SQUARE,
+            "container_feature_id": "opengeo:fixture:region:0001",
+            "candidate_position": {"longitude": 73.855, "latitude": 18.525},
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["errors"][0]["code"] == "invalid_input"
+
+
+def test_contains_rejects_two_ways_of_naming_the_candidate(client: TestClient):
+    response = client.post(
+        "/v1/spatial/contains",
+        json={
+            "container": SQUARE,
+            "candidate": {"type": "Point", "coordinates": [73.855, 18.525]},
+            "candidate_position": {"longitude": 73.855, "latitude": 18.525},
+        },
+    )
+    assert response.status_code == 422
+    assert response.json()["errors"][0]["code"] == "invalid_input"
+
+
 def test_intersects_detects_a_crossing_line(client: TestClient):
     body = client.post(
         "/v1/spatial/intersects",

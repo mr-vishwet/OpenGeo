@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Generic, Literal, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..geo import LonLat
 from ..geo.units import DistanceMethod, DistanceUnit
@@ -117,6 +117,18 @@ class SpatialRequest(BaseModel):
     container_feature_id: str | None = None
     candidate: dict[str, Any] | None = None
     candidate_position: Position | None = None
+
+    @model_validator(mode="after")
+    def _reject_ambiguous_input(self) -> SpatialRequest:
+        """Two ways to name one input is an ambiguity, not a precedence rule.
+
+        Picking one silently would answer a question the caller did not ask.
+        """
+        if self.container is not None and self.container_feature_id is not None:
+            raise ValueError("container and container_feature_id are mutually exclusive")
+        if self.candidate is not None and self.candidate_position is not None:
+            raise ValueError("candidate and candidate_position are mutually exclusive")
+        return self
 
 
 class ContainsRequest(SpatialRequest):
