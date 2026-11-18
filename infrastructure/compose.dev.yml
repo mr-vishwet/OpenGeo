@@ -35,7 +35,8 @@ services:
       dockerfile: infrastructure/Dockerfile.api
     environment:
       OPENGEO_FIXTURE: /app/data/fixtures/pune_places.geojson
-      DATABASE_URL: postgresql://${POSTGRES_USER:-opengeo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-opengeo}
+      OPENGEO_STORE: postgis
+      OPENGEO_DATABASE_URL: postgresql://${POSTGRES_USER:-opengeo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-opengeo}
     depends_on:
       db:
         condition: service_healthy

@@ -59,6 +59,7 @@ class CapabilityManifest(BaseModel):
 def build_manifest(store: FeatureStore) -> CapabilityManifest:
     features = list(store.features())
     categories = sorted({f.category for f in features if f.category})
+    is_postgres = getattr(store, "region", None) is not None
 
     capabilities = [
         Capability(
@@ -84,7 +85,14 @@ def build_manifest(store: FeatureStore) -> CapabilityManifest:
         Capability(
             name="nearby",
             state=CapabilityState.IMPLEMENTED,
-            note="Linear scan over the fixture store; no spatial index until PostGIS is attached.",
+            note=(
+                "Served from PostGIS using a geography GiST expression index."
+                if is_postgres
+                else (
+                    "Linear scan over the fixture store; "
+                    "no spatial index until PostGIS is attached."
+                )
+            ),
         ),
         Capability(
             name="places.get",
@@ -92,8 +100,16 @@ def build_manifest(store: FeatureStore) -> CapabilityManifest:
         ),
         Capability(
             name="postgis",
-            state=CapabilityState.UNAVAILABLE,
-            note="No database attached. ADR-0003 makes PostGIS the served authority.",
+            state=(
+                CapabilityState.CONFIGURED
+                if is_postgres
+                else CapabilityState.UNAVAILABLE
+            ),
+            note=(
+                "Database attached and used to serve the active dataset version."
+                if is_postgres
+                else "No database attached. ADR-0003 makes PostGIS the served authority."
+            ),
         ),
         Capability(
             name="search",
@@ -133,11 +149,15 @@ def build_manifest(store: FeatureStore) -> CapabilityManifest:
         coordinate_systems=["EPSG:4326"],
         regions=[
             RegionCoverage(
-                region="Pune, Maharashtra (synthetic fixture)",
+                region=(
+                    "Pune, Maharashtra (imported fixture, PostGIS authority)"
+                    if is_postgres
+                    else "Pune, Maharashtra (synthetic fixture)"
+                ),
                 dataset_version=store.dataset_version,
                 feature_count=len(features),
                 categories=categories,
-                authoritative_store="geojson-fixture",
+                authoritative_store="postgis" if is_postgres else "geojson-fixture",
             )
         ],
         routing_modes=[],
@@ -153,8 +173,15 @@ def build_manifest(store: FeatureStore) -> CapabilityManifest:
             source.attribution for source in store.sources
         ],
         capabilities=capabilities,
-        warnings=[
-            "This deployment serves a synthetic fixture, not a regional extract.",
-            "No spatial index is in use. Latency and result quality claims are not valid here.",
-        ],
+        warnings=(
+            [
+                "The served dataset is the synthetic OpenGeo fixture, not OpenStreetMap data.",
+                "A spatial index is in use; result ordering is by geodesic distance.",
+            ]
+            if is_postgres
+            else [
+                "This deployment serves a synthetic fixture, not a regional extract.",
+                "No spatial index is in use. Latency and result quality claims are not valid here.",
+            ]
+        ),
     )

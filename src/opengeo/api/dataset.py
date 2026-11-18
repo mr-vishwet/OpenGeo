@@ -21,7 +21,7 @@ from typing import Protocol
 
 from shapely.geometry.base import BaseGeometry
 
-from ..geo import GeometryError, validate_feature
+from ..geo import GeometryError, LonLat, validate_feature
 from .models import SourceAttribution
 
 FIXTURE_PATH = Path(
@@ -63,6 +63,19 @@ class FeatureStore(Protocol):
 
     def features(self) -> Sequence[Feature]: ...
 
+    def nearby(
+        self,
+        center_lonlat: LonLat,
+        radius_m: float,
+        categories: Iterable[str],
+    ) -> Iterable[tuple[str, float]]:
+        """Point features within ``radius_m`` of ``center_lonlat``, nearest first.
+
+        The PostGIS store refines with a GiST/geography index; the fixture scans
+        in process. The signature is the seam both stores are held to.
+        """
+        ...
+
 
 class GeoJsonFeatureStore:
     """In-memory store over a validated GeoJSON FeatureCollection."""
@@ -103,6 +116,36 @@ class GeoJsonFeatureStore:
             if feature.geometry.geom_type == "Point":
                 yield feature.id, feature.geometry
 
+    def nearby(
+        self,
+        center_lonlat: LonLat,
+        radius_m: float,
+        categories: Iterable[str],
+    ) -> Iterable[tuple[str, float]]:
+        from ..geo.predicates import within_radius
 
-def load_default_store() -> GeoJsonFeatureStore:
+        wanted = {category.lower() for category in categories}
+        candidates = [
+            (feature.id, feature.geometry)
+            for feature in self.features()
+            if feature.geometry.geom_type == "Point"
+            and (not wanted or (feature.category or "").lower() in wanted)
+        ]
+        return within_radius(center_lonlat, radius_m, candidates)
+
+
+def load_default_store() -> FeatureStore:
+    """Choose the store from `OPENGEO_STORE`: `fixture` (default) or `postgis`.
+
+    Tests and local runs without a database keep the fixture. The PostGIS store
+    is selected only when the environment asks for it, never silently.
+    """
+    kind = os.environ.get("OPENGEO_STORE", "fixture").strip().lower()
+    if kind == "postgis":
+        from .postgis_dataset import PostgisFeatureStore
+
+        dsn = os.environ.get("OPENGEO_DATABASE_URL")
+        if not dsn:
+            raise ValueError("OPENGEO_STORE=postgis requires OPENGEO_DATABASE_URL")
+        return PostgisFeatureStore(dsn)
     return GeoJsonFeatureStore()

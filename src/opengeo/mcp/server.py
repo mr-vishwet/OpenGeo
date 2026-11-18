@@ -20,7 +20,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from .. import __version__
 from ..api.dataset import FeatureStore, load_default_store
 from ..api.models import MAX_LIMIT, MAX_RADIUS_M, Position, Radius
-from ..geo import DistanceMethod, GeometryError, predicate, validate_geometry, within_radius
+from ..geo import DistanceMethod, GeometryError, predicate, validate_geometry
 from ..geo.predicates import distance as compute_distance
 from ..geo.units import DistanceUnit, convert
 
@@ -82,14 +82,8 @@ def build_server(store: FeatureStore | None = None) -> MCPServer:
         if limit < 1 or limit > MAX_LIMIT:
             raise ToolError(f"invalid_input: limit must be between 1 and {MAX_LIMIT}")
 
-        wanted = {category.lower() for category in (categories or [])}
-        candidates = [
-            (feature.id, feature.geometry)
-            for feature in feature_store.features()
-            if feature.geometry.geom_type == "Point"
-            and (not wanted or (feature.category or "").lower() in wanted)
-        ]
-        hits = within_radius(center.as_lonlat(), radius_m, candidates)[:limit]
+        wanted = [category.lower() for category in (categories or [])]
+        hits = list(feature_store.nearby(center.as_lonlat(), radius_m, wanted))[:limit]
 
         places = []
         for feature_id, metres in hits:

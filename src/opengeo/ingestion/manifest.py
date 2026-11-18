@@ -29,6 +29,7 @@ class SourceRef(BaseModel):
     license: str
     attribution: str
     retrieved_at: str
+    allowed_uses: list[str] = Field(default_factory=list)
 
 
 class Counts(BaseModel):

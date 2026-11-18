@@ -80,6 +80,9 @@ CREATE TABLE opengeo.place (
 );
 
 CREATE INDEX place_geom_gix       ON opengeo.place USING GIST (geom);
+-- geography distance queries cast per row; an expression index makes the
+-- common nearby ST_DWithin(geography, geography, metres) path index-usable.
+CREATE INDEX place_geom_gix_geog  ON opengeo.place USING GIST (geography(geom));
 CREATE INDEX place_dataset_idx    ON opengeo.place (dataset_version);
 CREATE INDEX place_category_idx   ON opengeo.place (category);
 

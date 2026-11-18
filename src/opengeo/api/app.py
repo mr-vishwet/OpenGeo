@@ -26,7 +26,6 @@ from ..geo import (
     GeometryError,
     predicate,
     validate_geometry,
-    within_radius,
 )
 from ..geo import (
     distance as compute_distance,
@@ -179,12 +178,13 @@ def create_app(store_factory: Callable[[], FeatureStore] = load_default_store) -
     async def readyz(request: Request) -> dict[str, Any]:
         current = store(request)
         ready = len(current.features()) > 0
+        is_postgres = getattr(current, "region", None) is not None
         return {
             "status": "ready" if ready else "degraded",
             "checks": {
                 "feature_store": "ok" if ready else "empty",
-                "spatial_index": "not_configured",
-                "database": "not_attached",
+                "spatial_index": "configured" if is_postgres else "not_configured",
+                "database": "attached" if is_postgres else "not_attached",
             },
         }
 
@@ -227,15 +227,9 @@ def create_app(store_factory: Callable[[], FeatureStore] = load_default_store) -
                 hint="request a smaller radius or use a tiled query for large areas",
             )
 
-        wanted = {category.lower() for category in body.categories}
-        candidates = [
-            (feature.id, feature.geometry)
-            for feature in current.features()
-            if feature.geometry.geom_type == "Point"
-            and (not wanted or (feature.category or "").lower() in wanted)
-        ]
-
-        hits = within_radius(body.center.as_lonlat(), radius_m, candidates)[: body.limit]
+        hits = current.nearby(
+            body.center.as_lonlat(), radius_m, body.categories
+        )[: body.limit]
         data = []
         for feature_id, metres in hits:
             feature = current.get(feature_id)
