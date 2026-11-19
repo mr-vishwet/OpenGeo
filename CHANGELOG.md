@@ -3,6 +3,17 @@
 All observable changes are recorded here. Format follows Keep a Changelog;
 versioning follows semantic versioning once a public package is published.
 
+## [Unreleased]
+
+### Added
+
+- `tests/test_ingestion_postgis.py`: mock-backed unit tests for `import_collection`
+  — verifies source/run/version/place inserts, publish call, and rejection gating
+  without a live database.
+- `tests/test_postgis_dataset.py`: mock-backed unit tests for `PostgisFeatureStore`
+  — verifies active version loading, source resolution, feature validation at load,
+  `get`/`features`/`points`, and empty-DSN rejection.
+
 ## [0.1.0] — 2026-11-19
 
 First vertical slice. Everything below is backed by tests; nothing is claimed
