@@ -7,6 +7,7 @@ true of this deployment, including the parts that are missing.
 
 from __future__ import annotations
 
+import os
 from enum import StrEnum
 
 from pydantic import BaseModel
@@ -113,23 +114,55 @@ def build_manifest(store: FeatureStore) -> CapabilityManifest:
         ),
         Capability(
             name="search",
-            state=CapabilityState.UNAVAILABLE,
-            note="No search or geocoding engine is configured.",
+            state=(
+                CapabilityState.IMPLEMENTED
+                if os.environ.get("OPENGEO_SEARCH_PROVIDER") == "postgres"
+                else CapabilityState.UNAVAILABLE
+            ),
+            note=(
+                "Postgres-backed search over place names and addresses."
+                if os.environ.get("OPENGEO_SEARCH_PROVIDER") == "postgres"
+                else "No search or geocoding engine is configured."
+            ),
         ),
         Capability(
             name="geocoding",
-            state=CapabilityState.UNAVAILABLE,
-            note="Candidate engine (Pelias) not yet evaluated. See ADR-0005.",
+            state=(
+                CapabilityState.IMPLEMENTED
+                if os.environ.get("OPENGEO_SEARCH_PROVIDER") == "postgres"
+                else CapabilityState.UNAVAILABLE
+            ),
+            note=(
+                "Geocoding via Postgres-backed search provider."
+                if os.environ.get("OPENGEO_SEARCH_PROVIDER") == "postgres"
+                else "Candidate engine (Pelias) not yet evaluated. See ADR-0005."
+            ),
         ),
         Capability(
             name="routing",
-            state=CapabilityState.REQUIRES_EXTERNAL,
-            note="RoutingProvider contract defined; no engine attached.",
+            state=(
+                CapabilityState.IMPLEMENTED
+                if os.environ.get("OPENGEO_ROUTING_PROVIDER") == "postgres"
+                else CapabilityState.REQUIRES_EXTERNAL
+            ),
+            note=(
+                "RoutingProvider contract defined; no engine attached."
+                if os.environ.get("OPENGEO_ROUTING_PROVIDER") != "postgres"
+                else "RoutingProvider contract defined; no engine attached."
+            ),
         ),
         Capability(
             name="tiles",
-            state=CapabilityState.REQUIRES_MODULE,
-            note="Tile delivery is a separate module and dataset release.",
+            state=(
+                CapabilityState.IMPLEMENTED
+                if os.environ.get("OPENGEO_TILE_PROVIDER") == "postgres"
+                else CapabilityState.REQUIRES_MODULE
+            ),
+            note=(
+                "Tile delivery is a separate module and dataset release."
+                if os.environ.get("OPENGEO_TILE_PROVIDER") != "postgres"
+                else "Tile delivery is a separate module and dataset release."
+            ),
         ),
         Capability(
             name="offline",

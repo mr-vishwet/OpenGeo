@@ -1,4 +1,4 @@
-"""Routing provider interface.
+"""Routing provider interface and implementations.
 
 Implementations wrap an external routing engine (OSRM, Valhalla, GraphHopper,
 …) and translate between OpenGeo's request/response shapes and the provider's

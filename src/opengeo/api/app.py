@@ -46,8 +46,21 @@ from .models import (
     PlaceSummary,
     PredicateResult,
     Provenance,
+    RouteRequestModel,
+    RouteResultModel,
+    SearchRequest,
+    SearchResult,
     SpatialRequest,
+    TileResultModel,
 )
+from .routing_provider import RouteRequest, RoutingProvider, UnimplementedRoutingProvider
+from .search_provider import (
+    GeocodeRequest,
+    PostgresSearchProvider,
+    SearchProvider,
+    UnimplementedSearchProvider,
+)
+from .tile_provider import TileProvider, TileRequest, UnimplementedTileProvider
 
 API_VERSION = "v1"
 
@@ -115,6 +128,20 @@ def create_app(store_factory: Callable[[], FeatureStore] = load_default_store) -
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.store = store_factory()
+        # Initialize providers from environment. Unimplemented providers refuse
+        # every request until an engine is attached.
+        app.state.search_provider = UnimplementedSearchProvider()
+        app.state.routing_provider = UnimplementedRoutingProvider()
+        app.state.tile_provider = UnimplementedTileProvider()
+        if os.environ.get("OPENGEO_SEARCH_PROVIDER") == "postgres":
+            app.state.search_provider = PostgresSearchProvider(
+                os.environ.get("OPENGEO_DATABASE_URL", ""),
+                region=os.environ.get("OPENGEO_SEARCH_REGION", "pune"),
+            )
+        if os.environ.get("OPENGEO_ROUTING_PROVIDER") == "postgres":
+            app.state.routing_provider = UnimplementedRoutingProvider()
+        if os.environ.get("OPENGEO_TILE_PROVIDER") == "postgres":
+            app.state.tile_provider = UnimplementedTileProvider()
         yield
 
     app = FastAPI(
@@ -389,6 +416,57 @@ def create_app(store_factory: Callable[[], FeatureStore] = load_default_store) -
             request,
             PredicateResult(predicate="intersects", result=result).model_dump(mode="json"),
             current,
+        )
+
+    @app.post("/v1/search", tags=["search"])
+    async def search(request: Request, body: SearchRequest) -> dict[str, Any]:
+        provider: SearchProvider = request.app.state.search_provider
+        bounds = tuple(body.bounds) if body.bounds else None
+        results = provider.geocode(
+            GeocodeRequest(query=body.query, limit=body.limit, bounds=bounds)
+        )
+        return _envelope(
+            request,
+            [SearchResult(**r.__dict__) for r in results],
+            store(request),
+        )
+
+    @app.post("/v1/route", tags=["routing"])
+    async def route(request: Request, body: RouteRequestModel) -> dict[str, Any]:
+        provider: RoutingProvider = request.app.state.routing_provider
+        result = provider.route(
+            RouteRequest(
+                origin_longitude=body.origin.longitude,
+                origin_latitude=body.origin.latitude,
+                destination_longitude=body.destination.longitude,
+                destination_latitude=body.destination.latitude,
+                profile=body.profile,
+            )
+        )
+        return _envelope(
+            request,
+            RouteResultModel(
+                distance_m=result.distance_m,
+                duration_s=result.duration_s,
+                geometry=[list(p) for p in result.geometry],
+                source=result.source,
+            ).model_dump(mode="json"),
+            store(request),
+        )
+
+    @app.get("/v1/tiles/{z}/{x}/{y}", tags=["tiles"])
+    async def tile(request: Request, z: int, x: int, y: int) -> dict[str, Any]:
+        provider: TileProvider = request.app.state.tile_provider
+        result = provider.tile(TileRequest(z=z, x=x, y=y))
+        import base64
+
+        return _envelope(
+            request,
+            TileResultModel(
+                data=base64.b64encode(result.data).decode("ascii"),
+                content_type=result.content_type,
+            ).model_dump(mode="json"),
+            store(request),
         )
 
     return app

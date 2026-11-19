@@ -143,3 +143,47 @@ class PredicateResult(BaseModel):
     predicate: str
     result: bool
     boundary_rule: str | None = None
+
+
+class SearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str
+    limit: int = Field(10, ge=1, le=100)
+    bounds: list[float] | None = Field(None, min_length=4, max_length=4)
+
+
+class SearchResult(BaseModel):
+    label: str
+    longitude: float
+    latitude: float
+    source: str
+    confidence: float | None = None
+
+
+class RouteRequestModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    origin: Position
+    destination: Position
+    profile: str = "car"
+
+
+class RouteResultModel(BaseModel):
+    distance_m: float
+    duration_s: float
+    geometry: list[list[float]]
+    source: str
+
+
+class TileRequestModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    z: int = Field(ge=0, le=22)
+    x: int = Field(ge=0)
+    y: int = Field(ge=0)
+
+
+class TileResultModel(BaseModel):
+    data: str  # base64-encoded MVT
+    content_type: str = "application/vnd.mapbox-vector-tile"

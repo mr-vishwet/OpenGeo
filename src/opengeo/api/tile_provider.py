@@ -1,4 +1,4 @@
-"""Tile provider interface.
+"""Tile provider interface and implementations.
 
 Implementations wrap an external tile server (Martin, Tegola, …) or generate
 vector tiles directly from PostGIS (via ST_AsMVT). Until an engine is attached,

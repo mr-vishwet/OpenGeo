@@ -39,6 +39,7 @@ services:
       OPENGEO_DATABASE_URL: postgresql://${POSTGRES_USER:-opengeo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-opengeo}
       OPENGEO_API_KEY: ${OPENGEO_API_KEY:-}
       OPENGEO_RATE_LIMIT: ${OPENGEO_RATE_LIMIT:-}
+      OPENGEO_SEARCH_PROVIDER: ${OPENGEO_SEARCH_PROVIDER:-}
     depends_on:
       db:
         condition: service_healthy
