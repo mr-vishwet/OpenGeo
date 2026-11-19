@@ -80,14 +80,14 @@ class SlippyMapState extends State<SlippyMap> {
   void initState() {
     super.initState();
     _zoom = widget.zoom;
-    _center = _normalise(widget.center);
+    _center = normalise(widget.center);
   }
 
   @override
   void didUpdateWidget(SlippyMap oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.center != widget.center) {
-      _center = _normalise(widget.center);
+      _center = normalise(widget.center);
     }
     if (oldWidget.zoom != widget.zoom) {
       _zoom = widget.zoom;
@@ -99,10 +99,10 @@ class SlippyMapState extends State<SlippyMap> {
   void zoomOut() => setState(() => _zoom = (_zoom - 1).clamp(_minZoom, _maxZoom));
 
   void recenter([GeoPoint? point]) {
-    setState(() => _center = _normalise(point ?? widget.center));
+    setState(() => _center = normalise(point ?? widget.center));
   }
 
-  static Offset _normalise(GeoPoint p) {
+  static Offset normalise(GeoPoint p) {
     final sinLat = math.sin(p.latitude * math.pi / 180);
     final y = 0.5 - math.log((1 + sinLat) / (1 - sinLat)) / (4 * math.pi);
     return Offset((p.longitude + 180) / 360, y.clamp(0.0, 1.0));
@@ -111,7 +111,7 @@ class SlippyMapState extends State<SlippyMap> {
   double get _worldPx => _tileSize * math.pow(2, _zoom).toDouble();
 
   Offset _screenOf(GeoPoint point, Size size) {
-    final n = _normalise(point);
+    final n = normalise(point);
     return Offset(
       (n.dx - _center.dx) * _worldPx + size.width / 2,
       (n.dy - _center.dy) * _worldPx + size.height / 2,
