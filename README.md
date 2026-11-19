@@ -8,22 +8,70 @@ Coordinates are EPSG:4326, longitude first. Distances carry an explicit unit and
 
 ## Use cases
 
-- Nearby POI search — "What cafés are within 2 km of Shivajinagar?"
-- Straight-line distance — "How far is Cafe Goodluck from Pune Junction?"
-- Point-in-region check — "Is this address inside the Pune municipal boundary?"
-- Line-region intersection — "Does this delivery route cross the restricted zone?"
-- Dataset versioning — "Serve the Pune extract from 14 Nov; roll back if bad."
-- Boundary-in vs boundary-on — "One rule excludes the edge; the other includes it."
-- Multi-region rollout — "Pune first, then Bengaluru — one active version per region."
-- Agent tool access — "An AI agent can call spatial tools over stdio."
-- Extract ingestion gate — "Reject an OSM extract if more than 20 % of features fail validation."
-- Stable error codes — "Branch on the error code, not the message."
-- Capability manifest — "The manifest tells a client what this deployment refuses."
-- Latency baseline — "Records p50/p95/p99 with commit and hardware context."
-- Cross-surface parity — "Python and Dart judge geometry vectors identically."
-- PostGIS authority — "Serve from a spatial database with an index on geography."
-- Atomic publication — "Flips the active dataset version in one transaction."
-- Indian metros roadmap — "Pune first, then Bengaluru and other Indian metros."
+### Nearby POI search
+
+Find businesses, services, or points of interest within a radius of any position, ordered by distance. A delivery app can show the nearest cafés to a user in Shivajinagar; a logistics dashboard can list warehouses within 5 km of a depot. Results carry exact metres so clients never guess at proximity.
+
+### Straight-line distance
+
+Compute geodesic distance between two positions with an explicit unit and method. A travel planner can show the crow-flies distance from Cafe Goodluck to Pune Junction in kilometres. The method is declared on every answer, so a straight line is never mistaken for road distance.
+
+### Point-in-region check
+
+Test whether an address or GPS point falls inside a named region — for example, whether a delivery address is inside the Pune municipal boundary. Two predicates are available: `contains` excludes the boundary, `covers` includes it, so clients choose the exact semantics their business rule needs.
+
+### Line-region intersection
+
+Determine whether a route, delivery path, or drawn line crosses a region boundary. A fleet manager can check if a vehicle's planned route passes through a restricted zone before dispatching.
+
+### Dataset versioning
+
+Every dataset has a versioned identifier derived from its source checksum. A client can serve the Pune extract from a specific date, compare two versions side by side, and roll back to the previous one atomically if a new import is bad.
+
+### Boundary-in vs boundary-on
+
+Two distinct predicates handle edge cases deliberately: `contains` excludes the boundary (a point exactly on the line returns false), `covers` includes it (returns true). Clients select the rule that matches their legal or operational definition of "inside."
+
+### Multi-region rollout
+
+Run Pune as the first region, then add Bengaluru and other Indian metros without cross-contamination. The database enforces one active dataset version per region, so activating a new extract for Bengaluru never displaces Pune's live data.
+
+### Agent tool access
+
+Expose spatial tools to AI agents over stdio via the MCP server. An agent can call `geo.nearby`, `geo.distance`, `geo.contains`, or `geo.intersects` and receive structured results — only the tools this build can actually serve, with nothing stubbed or approximated.
+
+### Extract ingestion gate
+
+Validate every feature in an OSM extract before it reaches production. The gate checks geometry validity, required metadata, duplicate IDs, and coordinate range, then refuses any file where more than 20 % of records fail. Nothing is repaired silently.
+
+### Stable error codes
+
+Every rejection carries a machine-readable code (`invalid_ring`, `self_intersecting_ring`, `invalid_coordinate`, etc.) alongside a human message. Clients branch on the code, never on fragile message text, so error handling is stable across versions.
+
+### Capability manifest
+
+`GET /v1/capabilities` reports what this deployment can and cannot do. `postgis`, `geocoding`, `routing`, and `tiles` are marked `unavailable` rather than implied, so clients never build on a capability that isn't actually there.
+
+### Latency baseline
+
+`benchmarks/run_baseline.py` records p50/p95/p99 latency for nearby scans and distance queries, annotated with commit hash, dataset version, dependency versions, and hardware. A number without that context is not a benchmark.
+
+### Cross-surface parity
+
+The Python service and the Dart SDK validate the same shared geometry verdicts (`tests/parity/geometry_vectors.json`). A validation rule that drifts on one surface fails the other, so an answer is consistent whether it comes from REST or Dart.
+
+### PostGIS authority
+
+When a database is attached, PostGIS becomes the served authority. The migration creates the PostGIS extension, a GiST index on geography, and enforces one active dataset version per region — application code never bypasses it.
+
+### Atomic publication
+
+Dataset publication happens in a single transaction: stage an import run, validate it, publish it, and activate the new version. Either everything commits or nothing does — a failed run never leaves a partial dataset in place.
+
+### Indian metros roadmap
+
+Start with Pune as the first release, then extend to Bengaluru and other Indian metropolitan cities. Each region gets its own active dataset version, and no region's data is touched when another is updated.
+
 
 ## Architecture
 
