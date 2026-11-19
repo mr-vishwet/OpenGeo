@@ -84,6 +84,53 @@ Dataset publication happens in a single transaction: stage an import run, valida
 
 Start with Pune as the first release, then extend to Bengaluru and other Indian metropolitan cities. Each region gets its own active dataset version, and no region's data is touched when another is updated.
 
+## Navigation modes
+
+OpenGeo supports multiple map rendering and navigation modes. Each mode serves a different use case — from live street-level navigation to satellite imagery, LLM-powered natural-language queries, and game-style rendering.
+
+| Mode | Description | Best for |
+|------|-------------|----------|
+| Live Realtime | Live street-level map with real-time traffic, POI search, and turn-by-turn navigation | Daily navigation, delivery tracking, ride-hailing |
+| Satellite | High-resolution satellite imagery with terrain overlay | Field surveying, agriculture, disaster response |
+| LLM based | Natural-language queries via LLM ("find cafes near me with WiFi") | Voice assistants, accessibility, exploratory search |
+| Game maps | Stylized, game-engine rendering with custom themes | Games, simulations, AR experiences |
+
+![Live Realtime](docs/images/modes/live-realtime.jpg)
+![Satellite](docs/images/modes/satellite.jpg)
+![LLM based](docs/images/modes/llm-based.jpg)
+![Game maps](docs/images/modes/game-maps.jpg)
+
+Each mode is available through the same `opengeo-mcp` tool suite and Dart SDK — the underlying geography engine never changes, only the rendering and interaction layer.
+
+## Flutter client
+
+The `sdk/flutter_client/` directory contains a complete example Flutter app demonstrating all navigation modes. It serves as both documentation and a reference implementation:
+
+- **Maps screen**: Displays nearby places with placeholder for MapLibre GL integration
+- **Navigation mode selection**: Four mode cards for Live Realtime, Satellite, LLM Based, Game Maps  
+- **Place detail screen**: Shows place information with explicit EPSG:4326 coordinates
+- **Design tokens**: Light/dark theme, 8-point spacing grid, teal primary color
+- **Tests**: 9 passing unit tests for Place and NavigationMode models
+
+```bash
+cd sdk/flutter_client
+flutter pub get
+flutter test
+```
+
+### Architecture
+
+The Flutter client follows Material 3 and follows the kill-the-vibecode-mobile principles:
+
+- Material 3 design tokens (color, type, spacing, shape, motion)
+- Safe areas respected on all devices
+- 48dp minimum touch targets
+- Light + dark theme support
+- No gradient app bars, emoji, or invented ratings
+
+### Real data integration
+
+The app currently uses synthetic fixture data from `data/fixtures/pune_places.geojson`. Replace with live API calls by injecting `OpenGeoHttpClient` that hits your running OpenGeo instance.
 
 ## Architecture
 
