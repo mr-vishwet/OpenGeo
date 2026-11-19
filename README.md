@@ -4,39 +4,29 @@
 
 ## Mission
 
-OpenGeo is built for one belief: **geographic answers should never be guessed.** Every coordinate is EPSG:4326, longitude first. Every distance carries an explicit unit and method. Every geometry is validated before it is used — never silently repaired, never approximated. One spatial engine powers every surface, so an answer from the HTTP API is identical to an answer from the MCP server or the Dart SDK.
+Build the spatial engine that every app, agent, and game can trust — one deterministic geography implementation, self-hosted, with no approximations and no hidden stubs. OpenGeo exists so you never have to wonder whether a distance is road or straight-line, whether a point is inside or on the edge of a region, or whether the dataset behind an answer is the one you think it is.
 
-This is a toolkit for teams that need deterministic geography: a spatial engine you can trust, surfaces that agree with each other, and a refusal to pretend a straight line is a road trip.
+## Major
 
-## Major capabilities
+- **One geography implementation.** Validation, geodesy, and predicates live in a single trust boundary. The HTTP API, MCP server, and Dart SDK all call the same code — an answer cannot differ between REST and MCP.
+- **Refusals, not approximations.** Routing, geocoding, and isochrones are absent rather than stubbed with a straight line. `GET /v1/capabilities` tells clients exactly what this deployment can and cannot do.
+- **Geometry that is rejected, never repaired.** Bad rings, swapped coordinates, self-intersections, and holes outside shells fail with stable error codes — never silently clamped into production bugs.
+- **Dataset versions that cannot lie.** Every extract is checksum-verified, gated at a 20 % rejection ratio, and published atomically. One active version per region is enforced by the database, not by convention.
+- **Four Indian metros in scope.** Pune first, then Bengaluru and other metros — each region isolated with its own active version, cross-contamination impossible.
 
-**One engine, every surface.**  
-A single validation boundary (GEOS/shapely) and one geodesy path feed every client surface. The HTTP API, the stdio MCP server, and the Dart SDK all read from the same trust boundary, so no two clients ever get contradictory answers for the same input.
+## What OpenGeo does
 
-**Deterministic, versioned data.**  
-Every dataset carries a version derived from its source checksum. Serve Pune from 14 November, compare two versions side by side, roll back atomically if an import is bad. The database enforces one active version per region — Pune and Bengaluru never collide.
+Coordinates are **EPSG:4326, longitude first**. Distances carry an explicit **unit and method**. Bad geometry is rejected with a **stable error code** — never silently repaired. One geography implementation powers every surface (HTTP API, MCP server, Dart SDK), so an answer cannot differ between REST and MCP.
 
-**Refusals, not approximations.**  
-Routing, geocoding, and tiles are absent rather than stubbed with a straight line. `GET /v1/capabilities` tells clients exactly what this deployment refuses, so nothing is built on a capability that isn't really there.
-
-**Bad data is stopped at the gate.**  
-The ingestion gate validates every feature in an OSM extract — geometry, metadata, duplicate IDs, coordinate range — and refuses anything above a 20 % rejection ratio. Nothing is repaired silently.
-
-**Honest errors.**  
-Every rejection carries a machine-readable code (`invalid_ring`, `self_intersecting_ring`, `invalid_coordinate`) alongside a human message. Clients branch on the code, never on fragile message text.
-
-**Cross-surface parity.**  
-The Python service and the Dart SDK validate the same shared geometry verdicts. A validation rule that drifts on one surface fails the other.
-
-## What you can build with OpenGeo
+## Use cases
 
 ### Nearby POI search
 
-Find businesses, services, or points of interest within a radius of any position, ordered by distance. A delivery app shows the nearest cafés to a user in Shivajinagar; a logistics dashboard lists warehouses within 5 km of a depot. Results carry exact metres — no guessing at proximity.
+Find businesses, services, or points of interest within a radius of any position, ordered by distance. A delivery app can show the nearest cafés to a user in Shivajinagar; a logistics dashboard can list warehouses within 5 km of a depot. Results carry exact metres so clients never guess at proximity.
 
 ### Straight-line distance
 
-Compute geodesic distance between two positions with an explicit unit and method. A travel planner shows the crow-flies distance from Cafe Goodluck to Pune Junction in kilometres. The method is declared on every answer, so a straight line is never mistaken for road distance.
+Compute geodesic distance between two positions with an explicit unit and method. A travel planner can show the crow-flies distance from Cafe Goodluck to Pune Junction in kilometres. The method is declared on every answer, so a straight line is never mistaken for road distance.
 
 ### Point-in-region check
 
@@ -44,15 +34,19 @@ Test whether an address or GPS point falls inside a named region — for example
 
 ### Line-region intersection
 
-Determine whether a route, delivery path, or drawn line crosses a region boundary. A fleet manager checks if a vehicle's planned route passes through a restricted zone before dispatching.
+Determine whether a route, delivery path, or drawn line crosses a region boundary. A fleet manager can check if a vehicle's planned route passes through a restricted zone before dispatching.
 
 ### Dataset versioning
 
-Every dataset has a versioned identifier derived from its source checksum. Serve the Pune extract from a specific date, compare two versions side by side, and roll back to the previous one atomically if a new import is bad.
+Every dataset has a versioned identifier derived from its source checksum. A client can serve the Pune extract from a specific date, compare two versions side by side, and roll back to the previous one atomically if a new import is bad.
+
+### Boundary-in vs boundary-on
+
+Two distinct predicates handle edge cases deliberately: `contains` excludes the boundary (a point exactly on the line returns false), `covers` includes it (returns true). Clients select the rule that matches their legal or operational definition of "inside."
 
 ### Multi-region rollout
 
-Run Pune as the first region, then add Bengaluru and other Indian metros without cross-contamination. The database enforces one active dataset version per region — activating a new extract for Bengaluru never displaces Pune's live data.
+Run Pune as the first region, then add Bengaluru and other Indian metros without cross-contamination. The database enforces one active dataset version per region, so activating a new extract for Bengaluru never displaces Pune's live data.
 
 ### Agent tool access
 
@@ -62,6 +56,26 @@ Expose spatial tools to AI agents over stdio via the MCP server. An agent can ca
 
 Validate every feature in an OSM extract before it reaches production. The gate checks geometry validity, required metadata, duplicate IDs, and coordinate range, then refuses any file where more than 20 % of records fail. Nothing is repaired silently.
 
+### Stable error codes
+
+Every rejection carries a machine-readable code (`invalid_ring`, `self_intersecting_ring`, `invalid_coordinate`, etc.) alongside a human message. Clients branch on the code, never on fragile message text, so error handling is stable across versions.
+
+### Capability manifest
+
+`GET /v1/capabilities` reports what this deployment can and cannot do. `postgis`, `geocoding`, `routing`, and `tiles` are marked `unavailable` rather than implied, so clients never build on a capability that isn't actually there.
+
+### Latency baseline
+
+`benchmarks/run_baseline.py` records p50/p95/p99 latency for nearby scans and distance queries, annotated with commit hash, dataset version, dependency versions, and hardware. A number without that context is not a benchmark.
+
+### Cross-surface parity
+
+The Python service and the Dart SDK validate the same shared geometry verdicts (`tests/parity/geometry_vectors.json`). A validation rule that drifts on one surface fails the other, so an answer is consistent whether it comes from REST or Dart.
+
+### PostGIS authority
+
+When a database is attached, PostGIS becomes the served authority. The migration creates the PostGIS extension, a GiST index on geography, and enforces one active dataset version per region — application code never bypasses it.
+
 ### Atomic publication
 
 Dataset publication happens in a single transaction: stage an import run, validate it, publish it, and activate the new version. Either everything commits or nothing does — a failed run never leaves a partial dataset in place.
@@ -69,6 +83,7 @@ Dataset publication happens in a single transaction: stage an import run, valida
 ### Indian metros roadmap
 
 Start with Pune as the first release, then extend to Bengaluru and other Indian metropolitan cities. Each region gets its own active dataset version, and no region's data is touched when another is updated.
+
 
 ## Architecture
 
@@ -95,6 +110,3 @@ flowchart TD
     Store -.-> PostGIS
 ```
 
-## License
-
-Code: Apache-2.0. OSM-derived data stays under ODbL and remains separate from the code; attribution remains visible in every client.
