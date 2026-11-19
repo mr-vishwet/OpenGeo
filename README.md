@@ -24,3 +24,45 @@ Coordinates are EPSG:4326, longitude first. Distances carry an explicit unit and
 - PostGIS authority — "Serve from a spatial database with an index on geography."
 - Atomic publication — "Flips the active dataset version in one transaction."
 - Indian metros roadmap — "Pune first, then Bengaluru and other Indian metros."
+
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph Surfaces
+        API[HTTP API • FastAPI]
+        MCP[MCP server • stdio]
+        SDK[Dart SDK • geo_types]
+    end
+
+    subgraph Application["Application & trust boundary"]
+        Store[Feature store • validates geometry via GEOS/shapely]
+    end
+
+    subgraph Data["Data plane"]
+        Fixture[GeoJSON fixture • Pune, 13 places]
+        PostGIS[PostGIS 16 • geography GiST index]
+    end
+
+    API --> Store
+    MCP --> Store
+    Store --> Fixture
+    Store -.-> PostGIS
+```
+
+## Repository layout
+
+```
+src/opengeo/            the single Python distribution
+  api/                  FastAPI service: routes, envelope, errors, fixture + PostGIS stores
+  geo/                  units, geodesy, validation boundary, predicates
+  ingestion/            checksummed manifests, quality gate, atomic publish, PostGIS import
+  mcp/                  tool catalogue, plan validator, stdio server
+packages/geo_types/     canonical coordinate, CRS, bbox and geometry types (Dart)
+tests/                  Python suite plus shared parity vectors
+infrastructure/         Compose stack, PostGIS migration, API image
+benchmarks/             OpenGeoBench baseline runner
+docs/                   public documentation
+adr/                    architecture decision records
+```
+
