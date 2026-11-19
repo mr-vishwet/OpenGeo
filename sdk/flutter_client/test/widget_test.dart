@@ -1,48 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opengeo_flutter/main.dart';
-import 'package:opengeo_flutter/models/place.dart' as opengeo_model;
+import 'package:opengeo_flutter/models/map_mode.dart';
+import 'package:opengeo_flutter/screens/select_mode_screen.dart';
 
 void main() {
-  group('App loading', () {
-    testWidgets('OpenGeo app loads', (WidgetTester tester) async {
-      await tester.pumpWidget(const OpenGeoApp());
+  testWidgets('splash shows the brand and Get Started', (tester) async {
+    await tester.pumpWidget(const OpenGeoApp());
 
-      // Verify the app loads without errors
-      expect(find.byType(Scaffold), findsOneWidget);
-    });
-
-    testWidgets('Home screen has mode icon', (WidgetTester tester) async {
-      await tester.pumpWidget(const OpenGeoApp());
-
-      // Verify mode selection icon exists
-      expect(find.byType(DropdownButton<String>), findsOneWidget);
-    });
-
-    testWidgets('NavigationMode values are correct', (WidgetTester tester) async {
-      expect(opengeo_model.NavigationMode.values.length, 4);
-      expect(opengeo_model.NavigationMode.liveRealtime.label, 'Live Realtime');
-      expect(opengeo_model.NavigationMode.satellite.label, 'Satellite');
-      expect(opengeo_model.NavigationMode.llmBased.label, 'LLM Based');
-      expect(opengeo_model.NavigationMode.gameMaps.label, 'Game Maps');
-    });
+    expect(find.text('OpenGeo'), findsOneWidget);
+    expect(find.text('Explore. Navigate. Build Smarter.'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
+    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).theme, isNotNull);
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).darkTheme,
+      isNotNull,
+    );
   });
 
-  group('kill-the-vibecode-mobile compliance tests', () {
-    testWidgets('no invented ratings', (WidgetTester tester) async {
-      await tester.pumpWidget(const OpenGeoApp());
+  testWidgets('Get Started opens Select a Mode with all five modes',
+      (tester) async {
+    await tester.pumpWidget(const OpenGeoApp());
+    await tester.tap(find.text('Get Started'));
+    await tester.pumpAndSettle();
 
-      // Verify no fake 5-star ratings
-      expect(find.textContaining('5.0'), findsNothing);
-      expect(find.textContaining('rating'), findsNothing);
-      expect(find.textContaining('star'), findsNothing);
-    });
+    expect(find.byType(SelectModeScreen), findsOneWidget);
+    expect(find.text('Select a Mode'), findsOneWidget);
+    expect(find.text('Choose how you want to explore maps'), findsOneWidget);
+    for (final mode in MapMode.values) {
+      expect(find.text(mode.label), findsOneWidget);
+    }
+  });
 
-    testWidgets('AppBar has title', (WidgetTester tester) async {
-      await tester.pumpWidget(const OpenGeoApp());
+  testWidgets('mode cards fit a 360x640 screen without overflow',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
-      // AppBar should have a proper title
-      expect(find.textContaining('OpenGeo'), findsOneWidget);
-    });
+    await tester.pumpWidget(
+      const MaterialApp(home: SelectModeScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(find.text('Custom World'), 200);
+    expect(find.text('Custom World'), findsOneWidget);
   });
 }

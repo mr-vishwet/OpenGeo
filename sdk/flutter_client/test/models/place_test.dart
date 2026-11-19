@@ -1,114 +1,161 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:opengeo_flutter/models/place.dart' as opengeo_model;
+import 'package:opengeo_flutter/models/place.dart';
 
 void main() {
+  const place = Place(
+    id: 'osho-garden',
+    name: 'Osho Garden',
+    category: 'park',
+    latitude: 18.5089,
+    longitude: 73.8584,
+    distanceMeters: 850,
+    rating: 4.6,
+    reviewCount: 12000,
+  );
+
   group('Place', () {
-    test('displayName returns name when names is null', () {
-      const place = opengeo_model.Place(
-        id: 'test-1',
-        name: 'Test Cafe',
-        category: 'cafe',
-        longitude: 73.85,
+    test('displayName prefers the untagged localized name', () {
+      const withNames = Place(
+        id: 'x',
+        name: 'Pune',
+        category: 'city',
         latitude: 18.52,
-      );
-
-      expect(place.displayName, 'Test Cafe');
-    });
-
-    test('displayName returns first value when language is empty', () {
-      const place = opengeo_model.Place(
-        id: 'test-1',
-        name: 'Test Cafe',
-        category: 'cafe',
         longitude: 73.85,
-        latitude: 18.52,
         names: [
-          {'language': '', 'value': 'Official Name'},
-          {'language': 'mr', 'value': 'मराठी नाव'},
+          LocalizedName(language: 'mr', value: 'पुणे'),
+          LocalizedName(language: '', value: 'Pune City'),
         ],
       );
-
-      expect(place.displayName, 'Official Name');
+      expect(withNames.displayName, 'Pune City');
     });
 
-    test('addressLine returns formatted address', () {
-      const place = opengeo_model.Place(
-        id: 'test-1',
-        name: 'Test Cafe',
-        category: 'cafe',
-        longitude: 73.85,
-        latitude: 18.52,
-        address: {
-          'house_number': '42',
-          'street': 'Main Road',
-          'locality': 'Shivajinagar',
-        },
+    test('displayName falls back to name', () {
+      expect(place.displayName, 'Osho Garden');
+    });
+
+    test('distanceFormatted switches at one kilometre', () {
+      expect(place.distanceFormatted, '850 m');
+      expect(
+        const Place(
+          id: 'y',
+          name: 'Y',
+          category: 'cafe',
+          latitude: 18,
+          longitude: 73,
+          distanceMeters: 1300,
+        ).distanceFormatted,
+        '1.3 km',
       );
-
-      expect(place.addressLine, '42, Main Road, Shivajinagar');
     });
 
-    test('distanceFormatted returns correct string for meters', () {
-      const place = opengeo_model.Place(
-        id: 'test-1',
-        name: 'Test Cafe',
+    test('distanceFormatted is a dash when distance is unknown', () {
+      const unknown = Place(
+        id: 'z',
+        name: 'Z',
         category: 'cafe',
-        longitude: 73.85,
-        latitude: 18.52,
-        distanceMeters: 500,
+        latitude: 18,
+        longitude: 73,
       );
-
-      expect(place.distanceFormatted, '500 m');
+      expect(unknown.distanceFormatted, '—');
     });
 
-    test('distanceFormatted returns correct string for kilometers', () {
-      const place = opengeo_model.Place(
-        id: 'test-1',
-        name: 'Test Cafe',
+    test('ratingLabel abbreviates thousands', () {
+      expect(place.ratingLabel, '4.6 (12.0k)');
+      expect(
+        const Place(
+          id: 'w',
+          name: 'W',
+          category: 'cafe',
+          latitude: 18,
+          longitude: 73,
+          rating: 4.4,
+          reviewCount: 932,
+        ).ratingLabel,
+        '4.4 (932)',
+      );
+    });
+
+    test('ratingLabel is null for unrated records', () {
+      const unrated = Place(
+        id: 'u',
+        name: 'U',
         category: 'cafe',
-        longitude: 73.85,
-        latitude: 18.52,
-        distanceMeters: 2500,
+        latitude: 18,
+        longitude: 73,
       );
-
-      expect(place.distanceFormatted, '2.5 km');
+      expect(unrated.ratingLabel, isNull);
     });
 
-    test('distanceFormatted returns dash when distance is null', () {
-      const place = opengeo_model.Place(
-        id: 'test-1',
-        name: 'Test Cafe',
+    test('metaLine joins category, distance and price', () {
+      expect(place.metaLine, 'Park · 850 m');
+      expect(
+        const Place(
+          id: 'p',
+          name: 'P',
+          category: 'cafe',
+          latitude: 18,
+          longitude: 73,
+          distanceMeters: 650,
+          priceLevel: '₹₹',
+        ).metaLine,
+        'Cafe · 650 m · ₹₹',
+      );
+    });
+
+    test('coordinatesLabel is labelled and four decimals', () {
+      expect(place.coordinatesLabel, '18.5089° N, 73.8584° E');
+    });
+
+    test('addressLine joins the known address parts', () {
+      const addressed = Place(
+        id: 'a',
+        name: 'A',
         category: 'cafe',
-        longitude: 73.85,
-        latitude: 18.52,
-        distanceMeters: null,
+        latitude: 18,
+        longitude: 73,
+        address: {'house_number': '12', 'street': 'FC Road', 'locality': 'Shivajinagar'},
       );
-
-      expect(place.distanceFormatted, '—');
-    });
-  });
-
-  group('NavigationMode', () {
-    test('label returns correct strings for each mode', () {
-      expect(opengeo_model.NavigationMode.liveRealtime.label, 'Live Realtime');
-      expect(opengeo_model.NavigationMode.satellite.label, 'Satellite');
-      expect(opengeo_model.NavigationMode.llmBased.label, 'LLM Based');
-      expect(opengeo_model.NavigationMode.gameMaps.label, 'Game Maps');
+      expect(addressed.addressLine, '12, FC Road, Shivajinagar');
+      expect(place.addressLine, isNull);
     });
 
-    test('subtitle returns correct descriptions', () {
-      expect(opengeo_model.NavigationMode.liveRealtime.subtitle, 'Real-time traffic & POIs');
-      expect(opengeo_model.NavigationMode.satellite.subtitle, 'Satellite imagery & terrain');
-      expect(opengeo_model.NavigationMode.llmBased.subtitle, 'Natural language queries');
-      expect(opengeo_model.NavigationMode.gameMaps.subtitle, 'Stylized game rendering');
+    test('fromJson never invents sample-only fields', () {
+      final parsed = Place.fromJson({
+        'id': 'api-1',
+        'name': 'API Place',
+        'category': 'cafe',
+        'longitude': 73.85,
+        'latitude': 18.52,
+        'distance_meters': 320,
+      });
+      expect(parsed.distanceMeters, 320);
+      expect(parsed.rating, isNull);
+      expect(parsed.reviewCount, isNull);
+      expect(parsed.priceLevel, isNull);
+      expect(parsed.ratingLabel, isNull);
     });
 
-    test('color returns distinct colors for each mode', () {
-      expect(opengeo_model.NavigationMode.liveRealtime.color, const Color(0xFF00796B));
-      expect(opengeo_model.NavigationMode.satellite.color, const Color(0xFF1A237E));
-      expect(opengeo_model.NavigationMode.llmBased.color, const Color(0xFF6A1B9A));
-      expect(opengeo_model.NavigationMode.gameMaps.color, const Color(0xFFE65100));
+    test('fromJson reads localized names', () {
+      final parsed = Place.fromJson({
+        'id': 'api-2',
+        'name': 'Pune',
+        'longitude': 73.85,
+        'latitude': 18.52,
+        'names': [
+          {'language': 'mr', 'value': 'पुणे'},
+          {'language': '', 'value': 'Pune'},
+        ],
+      });
+      expect(parsed.displayName, 'Pune');
+      expect(parsed.category, '');
+    });
+
+    test('toJson round-trips the core fields', () {
+      final json = place.toJson();
+      expect(json['id'], 'osho-garden');
+      expect(json['longitude'], 73.8584);
+      expect(json['distance_meters'], 850);
+      expect(json.containsKey('rating'), isFalse);
     });
   });
 }
