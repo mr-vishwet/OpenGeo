@@ -82,17 +82,17 @@ def test_cli_refuses_an_extract_over_the_rejection_limit(tmp_path):
         feature("opengeo:2", {"type": "Polygon", "coordinates": [BOWTIE]}),
         feature("opengeo:3", {"type": "Polygon", "coordinates": [BOWTIE]}),
     )
-    assert main(["--source", str(write(tmp_path, document)), "--json"]) == 1
+    assert main(["assess", "--source", str(write(tmp_path, document)), "--json"]) == 1
 
 
 def test_cli_passes_an_acceptable_extract(tmp_path):
     document = collection(feature("opengeo:1", POINT), feature("opengeo:2", POINT))
-    assert main(["--source", str(write(tmp_path, document))]) == 0
+    assert main(["assess", "--source", str(write(tmp_path, document))]) == 0
 
 
 def test_cli_verifies_the_checksum_before_reading(tmp_path):
     path = write(tmp_path, collection(feature("opengeo:1", POINT)))
     good = hashlib.sha256(path.read_bytes()).hexdigest()
 
-    assert main(["--source", str(path), "--sha256", good]) == 0
-    assert main(["--source", str(path), "--sha256", "0" * 64]) == 2
+    assert main(["assess", "--source", str(path), "--sha256", good]) == 0
+    assert main(["assess", "--source", str(path), "--sha256", "0" * 64]) == 2

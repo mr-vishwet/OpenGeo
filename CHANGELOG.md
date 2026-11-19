@@ -13,6 +13,18 @@ versioning follows semantic versioning once a public package is published.
 - `tests/test_postgis_dataset.py`: mock-backed unit tests for `PostgisFeatureStore`
   — verifies active version loading, source resolution, feature validation at load,
   `get`/`features`/`points`, and empty-DSN rejection.
+- `tests/test_ingestion_postgres_integration.py`: integration tests against a live
+  PostGIS database — verifies atomic import+publish and rejection gating end to end.
+- `opengeo-ingest publish` subcommand: measures an extract and publishes it to
+  PostGIS in one command (`--dsn`, `--region`, `--run-id`, `--source-name`,
+  `--license`, `--attribution`, `--retrieved-at`, `--parser-version`,
+  `--transform-version`). `opengeo-ingest assess` remains the measurement-only gate.
+
+### Changed
+
+- `src/opengeo/api/postgis_dataset.py`: `jsonb` `properties` column parsed from
+  string to dict before unpacking into feature properties.
+- `tests/test_quality.py`: updated CLI tests to use `assess` subcommand.
 
 ## [0.1.0] — 2026-11-19
 

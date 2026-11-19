@@ -70,7 +70,11 @@ class PostgisFeatureStore:
                 except Exception as exc:
                     raise ValueError(f"{place_id}: invalid geometry in database: {exc}") from exc
                 # properties column is jsonb; psycopg returns it as a string.
-                properties_dict = json.loads(properties) if isinstance(properties, str) else (properties or {})
+                properties_dict = (
+                    json.loads(properties)
+                    if isinstance(properties, str)
+                    else (properties or {})
+                )
                 self._features[place_id] = Feature(
                     place_id,
                     geometry,

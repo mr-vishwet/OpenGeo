@@ -27,7 +27,8 @@ def test_store_loads_active_version_and_features():
             (
                 "opengeo:1",
                 "cafe",
-                '{"language": "mr", "value": "\u0915\u094d\u0930\u093e\u091a\u0947\u0928\u094d\u091f"}',
+                '{"language": "mr", "value": "\u0915\u094d\u0930\u093e\u091a\u0947'
+                '\u0928\u094d\u091f"}',
                 '{"house_number": "759/75", "street": "FC Road"}',
                 '{"category": "cafe"}',
                 '{"type": "Point", "coordinates": [73.8567, 18.5204]}',
@@ -70,9 +71,10 @@ def test_store_rejects_empty_dsn():
 
 def test_store_raises_when_no_active_version():
     conn = _mock_conn(None, [], [])
-    with patch("psycopg.connect", return_value=conn):
-        with pytest.raises(ValueError, match="no active dataset version for region"):
-            PostgisFeatureStore("postgresql://opengeo:opengeo@localhost:5432/opengeo")
+    with patch("psycopg.connect", return_value=conn), pytest.raises(
+        ValueError, match="no active dataset version for region"
+    ):
+        PostgisFeatureStore("postgresql://opengeo:opengeo@localhost:5432/opengeo")
 
 
 def test_store_points_yields_only_points():
