@@ -7,6 +7,7 @@ implementation.
 
 from __future__ import annotations
 
+import os
 import time
 import uuid
 from collections.abc import AsyncIterator, Callable
@@ -32,7 +33,7 @@ from ..geo import (
 )
 from ..geo.units import DistanceUnit, convert
 from .dataset import Feature, FeatureStore, load_default_store
-from .errors import ApiError, ErrorCode
+from .errors import HTTP_STATUS, ApiError, ErrorCode
 from .models import (
     MAX_RADIUS_M,
     ContainsRequest,
@@ -53,6 +54,10 @@ API_VERSION = "v1"
 # 8-64 characters of an id-safe alphabet: enough to correlate, nothing that can
 # escape into a log line.
 _REQUEST_ID = compile_pattern(r"[A-Za-z0-9._-]{8,64}")
+
+# Per-client IP token buckets: {ip: [timestamps]}. Simple in-memory rate limiter
+# for single-process deployments. Production should use Redis or similar.
+_rate_limit_buckets: dict[str, list[float]] = {}
 
 
 def _meta(request: Request, store: FeatureStore | None = None) -> Meta:
@@ -133,6 +138,65 @@ def create_app(store_factory: Callable[[], FeatureStore] = load_default_store) -
         request.state.started = time.perf_counter()
         response = await call_next(request)
         response.headers["X-Request-Id"] = request.state.request_id
+        return response
+
+    @app.middleware("http")
+    async def authenticate(request: Request, call_next):
+        expected_key = os.environ.get("OPENGEO_API_KEY", "")
+        if expected_key:
+            supplied = request.headers.get("x-api-key", "")
+            if supplied != expected_key:
+                return JSONResponse(
+                    status_code=HTTP_STATUS[ErrorCode.PERMISSION_DENIED],
+                    content={
+                        "data": None,
+                        "meta": _meta(request).model_dump(mode="json"),
+                        "errors": [
+                            {
+                                "code": ErrorCode.PERMISSION_DENIED.value,
+                                "message": "invalid or missing API key",
+                                "field": "x-api-key",
+                            }
+                        ],
+                    },
+                )
+        response = await call_next(request)
+        return response
+
+    @app.middleware("http")
+    async def rate_limit(request: Request, call_next):
+        limit = os.environ.get("OPENGEO_RATE_LIMIT", "")
+        if not limit:
+            return await call_next(request)
+        try:
+            max_requests, window_seconds = limit.split(":")
+            max_requests = int(max_requests)
+            window_seconds = int(window_seconds)
+        except ValueError:
+            return await call_next(request)
+
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.perf_counter()
+        bucket = _rate_limit_buckets.setdefault(client_ip, [])
+        # Remove old entries outside the window
+        bucket[:] = [t for t in bucket if now - t < window_seconds]
+        if len(bucket) >= max_requests:
+            return JSONResponse(
+                status_code=HTTP_STATUS[ErrorCode.QUOTA_EXHAUSTED],
+                content={
+                    "data": None,
+                    "meta": _meta(request).model_dump(mode="json"),
+                    "errors": [
+                        {
+                            "code": ErrorCode.QUOTA_EXHAUSTED.value,
+                            "message": "rate limit exceeded",
+                            "field": "x-api-key",
+                        }
+                    ],
+                },
+            )
+        bucket.append(now)
+        response = await call_next(request)
         return response
 
     @app.exception_handler(ApiError)
