@@ -92,7 +92,7 @@ def test_import_collection_refuses_rejected_features(tmp_path):
     with patch("opengeo.ingestion.postgis.assess") as mock_assess:
         mock_assess.return_value = _make_assessment(1, 0, 1)
 
-        with pytest.raises(ValueError, match="has rejected features"):
+        with pytest.raises(ValueError, match="has .* rejected features"):
             import_collection(
                 conn,
                 path,

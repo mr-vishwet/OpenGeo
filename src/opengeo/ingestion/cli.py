@@ -25,7 +25,7 @@ from .quality import assess
 
 def _cmd_assess(args: argparse.Namespace) -> int:
     try:
-        if args.sha256 and sha256_of(args.source) != args.sha256:
+        if args.sha256 and sha256_of(args.source).lower() != args.sha256.lower():
             raise ImportError_(
                 f"checksum mismatch for {args.source.name}: nothing was read beyond the hash"
             )
@@ -60,7 +60,7 @@ def _cmd_publish(args: argparse.Namespace) -> int:
     from opengeo.ingestion import SourceRef
 
     try:
-        if args.sha256 and sha256_of(args.source) != args.sha256:
+        if args.sha256 and sha256_of(args.source).lower() != args.sha256.lower():
             raise ImportError_(
                 f"checksum mismatch for {args.source.name}: nothing was read beyond the hash"
             )

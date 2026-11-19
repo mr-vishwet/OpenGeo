@@ -16,7 +16,7 @@ from typing import Any
 import shapely
 from shapely.geometry import shape
 
-from .manifest import Counts, ImportRun, Rejection, RunStatus, SourceRef
+from .manifest import REJECTION_BLOCK_RATIO, Counts, ImportRun, Rejection, RunStatus, SourceRef
 from .quality import assess
 
 
@@ -67,8 +67,11 @@ def import_collection(
     """Stage, write and publish an extract. Raises instead of writing partial data."""
 
     assessment = assess(Path(path))
-    if assessment.counts.rejected_ratio > 0.0:
-        raise ValueError(f"{path} has rejected features; repair the data, not the loader")
+    if assessment.counts.rejected_ratio > REJECTION_BLOCK_RATIO:
+        raise ValueError(
+            f"{path} has {assessment.counts.rejected_ratio:.1%} rejected features "
+            f"(limit {REJECTION_BLOCK_RATIO:.0%}); repair the data, not the loader"
+        )
 
     with open(path, encoding="utf-8") as handle:
         document = json.load(handle)

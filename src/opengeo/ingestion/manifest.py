@@ -115,7 +115,7 @@ def verify_source(path: Path, expected_sha256: str) -> str:
     if not path.is_file():
         raise ImportError_(f"source file not found: {path}")
     actual = sha256_of(path)
-    if actual != expected_sha256:
+    if actual.lower() != expected_sha256.lower():
         raise ImportError_(
             f"checksum mismatch for {path.name}: expected {expected_sha256[:12]}…, "
             f"got {actual[:12]}…"
