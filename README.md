@@ -1,6 +1,6 @@
 # OpenGeo
 
-![OpenGeo banner](.docs/Reference%20Images/file_00000000fd848211a3081616af5d5ecb.png)
+![OpenGeo banner](docs/OpenGEO_MASTER.png)
 
 A modular, self-hostable geospatial platform: one spatial engine, multiple rendering environments, on-demand geographic data, and modular capabilities for apps, agents and games.
 
