@@ -21,15 +21,22 @@ enum MapStyle {
   /// Human-readable tile provider, shown on the Profile screen.
   final String source;
 
-  String url(int z, int x, int y) => switch (this) {
+  /// Tile URL template with `{z}`, `{x}`, `{y}` placeholders. Esri services
+  /// take y before x; the raster fallback substitutes these directly.
+  String get tileTemplate => switch (this) {
         MapStyle.street =>
-          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/$z/$y/$x',
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
         MapStyle.dark =>
-          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/$z/$y/$x',
+          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
         MapStyle.satellite =>
-          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/$z/$y/$x',
-        MapStyle.terrain => 'https://a.tile.opentopomap.org/$z/$x/$y.png',
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        MapStyle.terrain => 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
       };
+
+  String url(int z, int x, int y) => tileTemplate
+      .replaceAll('{z}', '$z')
+      .replaceAll('{x}', '$x')
+      .replaceAll('{y}', '$y');
 
   String get attribution => switch (this) {
         MapStyle.satellite => 'Esri, Maxar, Earthstar Geographics',

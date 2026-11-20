@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/sample_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/map_viewport.dart';
 import '../widgets/slippy_map.dart';
 
 /// Spatial Engine preview: satellite map with a shrinking zone and a
@@ -47,7 +48,7 @@ class _GameModeScreenState extends State<GameModeScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: SlippyMap(
+            child: MapViewport(
               center: puneCentre,
               zoom: 13,
               style: MapStyle.satellite,

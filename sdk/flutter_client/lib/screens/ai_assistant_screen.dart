@@ -4,6 +4,7 @@ import '../data/sample_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/place_tile.dart';
+import '../widgets/map_viewport.dart';
 import '../widgets/slippy_map.dart';
 import 'place_detail_screen.dart';
 
@@ -93,7 +94,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                         Positioned.fill(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(R.card),
-                            child: SlippyMap(
+                            child: MapViewport(
                               center: puneCentre,
                               zoom: 12,
                               markers: [

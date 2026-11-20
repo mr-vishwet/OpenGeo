@@ -1,0 +1,27 @@
+/* OpenGeo map overlays: marker pins for the MapLibre renderer. */
+
+.og-pin {
+  width: 18px;
+  height: 18px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.og-pin-hl::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 3px solid rgba(26, 115, 232, 0.55);
+  transform: rotate(45deg);
+}
+
+/* The container Flutter hands us must fill its box or the map stays 0-height. */
+.flutter-view .og-map-host,
+.og-map-host {
+  position: absolute;
+  inset: 0;
+}

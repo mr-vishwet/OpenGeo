@@ -116,16 +116,17 @@ Each mode is also reachable through the same `opengeo-mcp` tool suite and Dart S
 
 `sdk/flutter_client/` is both the SDK's example app and its reference implementation: splash → Select a Mode → four-tab shell (Map, Explore, Saved, Profile).
 
-- **Map**: pan/zoom raster slippy map with Web-Mercator projection, place markers, a live-traffic card on Realtime, and a Nearby card
+- **Map**: MapLibre GL renderer on web (vector street style, pitched camera, extruded 3D buildings, terrarium terrain) with the raster slippy map as an automatic fallback for WebGL or style failures; place markers, a live-traffic card on Realtime, and a Nearby card
 - **Explore**: natural-language query over the Pune sample set with category filters and a map preview
 - **Saved**: All / Favorites / Visits with heart toggles
 - **Profile**: current mode, appearance, API endpoint and data attribution
 - **Supporting screens**: route preview, OpenGeo AI answer, game-mode HUD, custom-world layers, map-options sheet
-- **Tiles**: four base styles — Esri World Street Map, Dark Gray Canvas, World Imagery and OpenTopoMap terrain — plus an optional Esri World Hillshade relief overlay ("Terrain Relief" in Map Options), all with attribution. Point the `MapStyle` enum at the OpenGeo tile endpoint to self-host
-- **Low latency / low memory**: only viewport tiles are fetched, decoded tiles are capped at 64 MB / 256 images, tiles decode at `FilterQuality.low`, and the hillshade layer adds ~9 KB per tile
-- **Deep links**: `?mode=realtime|essential|intelligence|spatial|custom` opens a mode directly; `?screen=ai|game|custom-world|route|explore|saved` opens one screen; `?style=street|dark|satellite|terrain` overrides the base map
-- **Honest gaps**: routing, the AI answer, live traffic, 3D buildings, indoor maps and offline mode are labelled previews. Ratings, review counts and distances are marked sample values because the OpenGeo API does not serve them.
-- **Tests**: 30 passing unit and widget tests (models, modes, projection, tile styles, layout)
+- **Tiles**: four base styles — Esri World Street Map, Dark Gray Canvas, World Imagery and OpenTopoMap terrain — plus an optional Esri World Hillshade relief overlay ("Terrain Relief" in Map Options), all with attribution. Street uses the OpenFreeMap liberty vector style so it can extrude buildings; the OpenGeo API key is not needed for the public basemaps
+- **3D controls**: Map Options toggles 3D Buildings (street style only) and 3D Perspective (60° pitch). Spatial Engine opens pitched with terrain relief on
+- **Low latency / low memory**: only viewport tiles are fetched; the raster fallback caps decoded tiles at 64 MB / 256 images at `FilterQuality.low`, and the GL renderer uses `maxTileCacheSize: 256`, `maxTileCacheZoomLevels: 2` and cancels pending tile requests while zooming. The hillshade layer adds ~9 KB per tile
+- **Deep links**: `?mode=realtime|essential|intelligence|spatial|custom` opens a mode directly; `?screen=ai|game|custom-world|route|explore|saved` opens one screen; `?style=street|dark|satellite|terrain` overrides the base map; `?pitch=1` opens in 3D perspective; `?zoom=15` sets the initial zoom; `?renderer=raster` forces the slippy-map fallback
+- **Honest gaps**: routing, the AI answer, live traffic, indoor maps and offline mode are labelled previews. Ratings, review counts and distances are marked sample values because the OpenGeo API does not serve them.
+- **Tests**: 42 passing unit and widget tests (models, modes, projection, tile styles, GL style JSON, deep-link parsing, layout)
 
 ```bash
 cd sdk/flutter_client

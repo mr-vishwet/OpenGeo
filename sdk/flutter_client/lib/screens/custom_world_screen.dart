@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/sample_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/map_viewport.dart';
 import '../widgets/slippy_map.dart';
 
 /// Custom World preview: base map plus a layer checklist and a world card.
@@ -29,7 +30,7 @@ class _CustomWorldScreenState extends State<CustomWorldScreen> {
       body: Stack(
         children: [
           const Positioned.fill(
-            child: SlippyMap(
+            child: MapViewport(
               center: puneCentre,
               zoom: 13,
               style: MapStyle.street,

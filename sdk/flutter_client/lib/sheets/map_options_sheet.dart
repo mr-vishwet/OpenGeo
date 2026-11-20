@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../gl/map_config.dart';
 import '../theme/app_theme.dart';
 import '../widgets/slippy_map.dart';
 
@@ -9,6 +10,8 @@ class MapOptions {
     this.style = MapStyle.street,
     this.traffic = true,
     this.relief = false,
+    this.buildings = false,
+    this.pitch = 0,
   });
 
   final MapStyle style;
@@ -19,11 +22,25 @@ class MapOptions {
   /// Draws the Esri hillshade layer over the base map for real terrain relief.
   final bool relief;
 
-  MapOptions copyWith({MapStyle? style, bool? traffic, bool? relief}) =>
+  /// Extrudes 3D buildings (vector street style only, WebGL renderer only).
+  final bool buildings;
+
+  /// Camera tilt in degrees: 0 is top-down, 60 is a 3D perspective.
+  final double pitch;
+
+  MapOptions copyWith({
+    MapStyle? style,
+    bool? traffic,
+    bool? relief,
+    bool? buildings,
+    double? pitch,
+  }) =>
       MapOptions(
         style: style ?? this.style,
         traffic: traffic ?? this.traffic,
         relief: relief ?? this.relief,
+        buildings: buildings ?? this.buildings,
+        pitch: pitch ?? this.pitch,
       );
 }
 
@@ -39,7 +56,6 @@ class MapOptionsSheet extends StatefulWidget {
 
 class _MapOptionsSheetState extends State<MapOptionsSheet> {
   late MapOptions _options = widget.initial;
-  bool _buildings3d = true;
   bool _indoor = false;
   bool _offline = false;
 
@@ -85,8 +101,17 @@ class _MapOptionsSheetState extends State<MapOptionsSheet> {
             ),
             _SwitchRow(
               label: '3D Buildings',
-              value: _buildings3d,
-              onChanged: (v) => setState(() => _buildings3d = v),
+              value: _options.buildings,
+              enabled: styleHasBuildings(_options.style),
+              onChanged: (v) =>
+                  setState(() => _options = _options.copyWith(buildings: v)),
+            ),
+            _SwitchRow(
+              label: '3D Perspective',
+              value: _options.pitch > 0,
+              onChanged: (v) => setState(
+                () => _options = _options.copyWith(pitch: v ? 60 : 0),
+              ),
             ),
             _SwitchRow(
               label: 'Satellite View',
@@ -136,9 +161,9 @@ class _MapOptionsSheetState extends State<MapOptionsSheet> {
             Text('Save this area for offline use', style: text.bodySmall),
             const SizedBox(height: S.sm),
             Text(
-              'Preview build: map style and the traffic card are wired. '
-              'Buildings, terrain, indoor and offline layers need the OpenGeo '
-              'tiling service.',
+              'Map style, traffic card, terrain relief, 3D buildings and 3D '
+              'perspective are live. Indoor maps and offline downloads need '
+              'the OpenGeo tiling service.',
               style: text.labelSmall?.copyWith(color: secondary),
             ),
           ],
@@ -153,10 +178,12 @@ class _SwitchRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
   });
 
   final String label;
   final bool value;
+  final bool enabled;
   final ValueChanged<bool> onChanged;
 
   @override
@@ -166,9 +193,14 @@ class _SwitchRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: enabled ? null : Theme.of(context).disabledColor,
+                  ),
+            ),
           ),
-          Switch(value: value, onChanged: onChanged),
+          Switch(value: value, onChanged: enabled ? onChanged : null),
         ],
       ),
     );

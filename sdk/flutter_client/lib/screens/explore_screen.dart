@@ -6,6 +6,7 @@ import '../models/place.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/place_tile.dart';
+import '../widgets/map_viewport.dart';
 import '../widgets/slippy_map.dart';
 import 'place_detail_screen.dart';
 
@@ -121,10 +122,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
           SizedBox(
             height: 190,
-            child: SlippyMap(
+            child: MapViewport(
               center: puneCentre,
               zoom: 12,
               style: MapStyle.street,
+              // Small preview: a second WebGL context is not worth it here.
+              gl: false,
               markers: [
                 for (final place in results)
                   MapMarker(

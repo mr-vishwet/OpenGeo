@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../data/sample_data.dart';
+import '../gl/map_config.dart';
 import '../models/map_mode.dart';
 import '../models/place.dart';
 import '../sheets/map_options_sheet.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/place_tile.dart';
+import '../widgets/map_viewport.dart';
 import '../widgets/slippy_map.dart';
 import 'ai_assistant_screen.dart';
 import 'custom_world_screen.dart';
@@ -28,17 +30,25 @@ class MapHomeScreen extends StatefulWidget {
 }
 
 class _MapHomeScreenState extends State<MapHomeScreen> {
-  final _mapKey = GlobalKey<SlippyMapState>();
+  final _mapKey = GlobalKey<MapViewportState>();
+  late final MapStyle _startStyle = widget.initialStyle ??
+      switch (widget.mode) {
+        MapMode.realtime => MapStyle.satellite,
+        MapMode.spatial => MapStyle.terrain,
+        _ => MapStyle.street,
+      };
   late MapOptions _options = MapOptions(
-    style: widget.initialStyle ??
-        switch (widget.mode) {
-          MapMode.realtime => MapStyle.satellite,
-          MapMode.spatial => MapStyle.terrain,
-          _ => MapStyle.street,
-        },
+    style: _startStyle,
     // The game-style mode is the one that wants visible relief out of the box.
     relief: widget.mode == MapMode.spatial,
+    pitch: widget.mode == MapMode.spatial ||
+            pitchFromQuery(Uri.base.queryParameters)
+        ? 60
+        : 0,
+    buildings: styleHasBuildings(_startStyle),
   );
+  late final double _zoom =
+      mapZoom(Uri.base.queryParameters, pitched: _options.pitch > 0);
   bool _saved = false;
 
   static final _markers = [
@@ -153,12 +163,14 @@ class _MapHomeScreenState extends State<MapHomeScreen> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: SlippyMap(
+                  child: MapViewport(
                     key: _mapKey,
                     center: puneCentre,
-                    zoom: 12,
+                    zoom: _zoom,
                     style: _options.style,
                     relief: _options.relief,
+                    pitch: _options.pitch,
+                    buildings: _options.buildings,
                     markers: _markers,
                   ),
                 ),
@@ -259,7 +271,8 @@ class _MapHomeScreenState extends State<MapHomeScreen> {
 
   String get _statusLabel => switch (widget.mode) {
         MapMode.realtime => 'Live Traffic · Updated just now',
-        MapMode.essential => 'Essential · 2D map',
+        MapMode.essential =>
+          _options.pitch > 0 ? 'Essential · 3D map' : 'Essential · 2D map',
         MapMode.intelligence => 'Intelligence · AI ready',
         MapMode.spatial => 'Spatial Engine · 3D world',
         MapMode.custom => 'Custom World · Preview',

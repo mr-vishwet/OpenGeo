@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/sample_data.dart';
 import '../models/place.dart';
 import '../theme/app_theme.dart';
+import '../widgets/map_viewport.dart';
 import '../widgets/slippy_map.dart';
 
 enum _Transport { drive, walk, transit }
@@ -164,7 +165,7 @@ class _RouteScreenState extends State<RouteScreen> {
             ),
           ),
           Expanded(
-            child: SlippyMap(
+            child: MapViewport(
               center: sampleRouteCentre,
               zoom: 13,
               route: sampleRoute,
