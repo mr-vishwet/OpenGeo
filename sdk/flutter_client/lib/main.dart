@@ -1,11 +1,41 @@
 import 'package:flutter/material.dart';
 
+import 'models/map_mode.dart';
+import 'screens/ai_assistant_screen.dart';
+import 'screens/custom_world_screen.dart';
+import 'screens/explore_screen.dart';
+import 'screens/game_mode_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/route_screen.dart';
+import 'screens/saved_screen.dart';
+import 'screens/shell_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
   runApp(const OpenGeoApp());
 }
+
+/// Resolves `?mode=<name>` so a mode can be linked or screenshotted directly.
+/// Returns null when absent or unknown, which keeps the normal splash flow.
+MapMode? mapModeFromName(String? name) {
+  if (name == null || name.isEmpty) return null;
+  for (final mode in MapMode.values) {
+    if (mode.name == name) return mode;
+  }
+  return null;
+}
+
+/// Resolves `?screen=<name>` to a single full-screen route, used by docs and
+/// deep links. Returns null for absent or unknown values.
+Widget? screenFromName(String? name) => switch (name) {
+      'ai' => const AiAssistantScreen(),
+      'game' => const GameModeScreen(),
+      'custom-world' => const CustomWorldScreen(),
+      'route' => const RouteScreen(),
+      'explore' => const ExploreScreen(mode: MapMode.essential),
+      'saved' => const SavedScreen(),
+      _ => null,
+    };
 
 /// OpenGeo Flutter client — example app for the SDK.
 ///
@@ -15,13 +45,16 @@ class OpenGeoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final query = Uri.base.queryParameters;
+    final direct = screenFromName(query['screen']);
+    final mode = mapModeFromName(query['mode']);
     return MaterialApp(
       title: 'OpenGeo',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: const OnboardingScreen(),
+      home: direct ?? (mode == null ? const OnboardingScreen() : ShellScreen(mode: mode)),
     );
   }
 }

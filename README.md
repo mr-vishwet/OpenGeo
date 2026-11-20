@@ -86,51 +86,60 @@ Start with Pune as the first release, then extend to Bengaluru and other Indian 
 
 ## Navigation modes
 
-OpenGeo supports multiple map rendering and navigation modes. Each mode serves a different use case — from live street-level navigation to satellite imagery, LLM-powered natural-language queries, and game-style rendering.
+OpenGeo ships five map modes. They share one geography engine; only the rendering and interaction layer changes.
 
-| Mode | Description | Best for |
-|------|-------------|----------|
-| Live Realtime | Live street-level map with real-time traffic, POI search, and turn-by-turn navigation | Daily navigation, delivery tracking, ride-hailing |
-| Satellite | High-resolution satellite imagery with terrain overlay | Field surveying, agriculture, disaster response |
-| LLM based | Natural-language queries via LLM ("find cafes near me with WiFi") | Voice assistants, accessibility, exploratory search |
-| Game maps | Stylized, game-engine rendering with custom themes | Games, simulations, AR experiences |
+| Mode | What it shows | Best for |
+|------|---------------|----------|
+| **Realtime** | Aerial map with a live-traffic card and a Heavy / Moderate / Smooth legend | Daily navigation, delivery tracking, ride-hailing |
+| **Essential** | 2D street map with nearby places | Search-first apps, light data plans |
+| **Intelligence** | Natural-language answers with a map radius and matched places | Voice assistants, accessibility, exploratory search |
+| **Spatial Engine** | Satellite map with a safe-zone countdown and match HUD | Games, simulations, AR experiences |
+| **Custom World** | Base map plus a local layer checklist (buildings, terrain, water, events) | Branded worlds, private layers |
 
-![Live Realtime](docs/images/modes/live-realtime.jpg)
-![Satellite](docs/images/modes/satellite.jpg)
-![LLM based](docs/images/modes/llm-based.jpg)
-![Game maps](docs/images/modes/game-maps.jpg)
+Screenshots below are the Flutter example app running against Pune sample data.
 
-Each mode is available through the same `opengeo-mcp` tool suite and Dart SDK — the underlying geography engine never changes, only the rendering and interaction layer.
+![Realtime](docs/images/modes/mode-realtime.png)
+![Essential](docs/images/modes/mode-essential.png)
+![Intelligence](docs/images/modes/mode-intelligence.png)
+![Spatial Engine](docs/images/modes/mode-spatial-engine.png)
+![Custom World](docs/images/modes/mode-custom-world.png)
+
+Each mode is also reachable through the same `opengeo-mcp` tool suite and Dart SDK, so the geography engine never changes between surfaces.
+
+### Example screens
+
+![Explore](docs/images/modes/screen-explore.png)
+![Saved places](docs/images/modes/screen-saved.png)
+![Route preview](docs/images/modes/screen-route.png)
 
 ## Flutter client
 
-The `sdk/flutter_client/` directory contains a complete example Flutter app demonstrating all navigation modes. It serves as both documentation and a reference implementation:
+`sdk/flutter_client/` is both the SDK's example app and its reference implementation: splash → Select a Mode → four-tab shell (Map, Explore, Saved, Profile).
 
-- **Maps screen**: Displays nearby places with placeholder for MapLibre GL integration
-- **Navigation mode selection**: Four mode cards for Live Realtime, Satellite, LLM Based, Game Maps  
-- **Place detail screen**: Shows place information with explicit EPSG:4326 coordinates
-- **Design tokens**: Light/dark theme, 8-point spacing grid, teal primary color
-- **Tests**: 9 passing unit tests for Place and NavigationMode models
+- **Map**: pan/zoom raster slippy map with Web-Mercator projection, place markers, a live-traffic card on Realtime, and a Nearby card
+- **Explore**: natural-language query over the Pune sample set with category filters and a map preview
+- **Saved**: All / Favorites / Visits with heart toggles
+- **Profile**: current mode, appearance, API endpoint and data attribution
+- **Supporting screens**: route preview, OpenGeo AI answer, game-mode HUD, custom-world layers, map-options sheet
+- **Tiles**: Esri World Street Map, Dark Gray Canvas and World Imagery with attribution — point them at the OpenGeo tile endpoint once it serves raster tiles
+- **Deep links**: `?mode=realtime|essential|intelligence|spatial|custom` opens a mode directly; `?screen=ai|game|custom-world|route|explore|saved` opens one screen
+- **Honest gaps**: routing, the AI answer, live traffic, 3D buildings, indoor maps and offline mode are labelled previews. Ratings, review counts and distances are marked sample values because the OpenGeo API does not serve them.
+- **Tests**: 27 passing unit and widget tests (models, modes, projection, layout)
 
 ```bash
 cd sdk/flutter_client
 flutter pub get
 flutter test
+flutter build web --release   # then serve build/web
 ```
 
 ### Architecture
 
-The Flutter client follows Material 3 and follows the kill-the-vibecode-mobile principles:
-
-- Material 3 design tokens (color, type, spacing, shape, motion)
-- Safe areas respected on all devices
-- 48dp minimum touch targets
-- Light + dark theme support
-- No gradient app bars, emoji, or invented ratings
+Material 3 with tokens transcribed from the design references (blue accent `#1A73E8`, navy splash, 4pt spacing, radius scale), light and dark themes, safe areas, 48dp touch targets, one icon family, no emoji and no invented ratings.
 
 ### Real data integration
 
-The app currently uses synthetic fixture data from `data/fixtures/pune_places.geojson`. Replace with live API calls by injecting `OpenGeoHttpClient` that hits your running OpenGeo instance.
+The app uses the Pune fixtures in `data/fixtures/pune_places.geojson`. Point `sample_data.dart` at `OpenGeoHttpClient` calls to your running instance when you want live records; `Place.fromJson` already leaves every display-only field null for API responses.
 
 ## Architecture
 

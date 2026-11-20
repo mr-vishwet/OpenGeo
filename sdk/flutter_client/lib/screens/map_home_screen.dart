@@ -26,7 +26,11 @@ class MapHomeScreen extends StatefulWidget {
 
 class _MapHomeScreenState extends State<MapHomeScreen> {
   final _mapKey = GlobalKey<SlippyMapState>();
-  MapOptions _options = const MapOptions();
+  late MapOptions _options = MapOptions(
+    style: widget.mode == MapMode.realtime || widget.mode == MapMode.spatial
+        ? MapStyle.satellite
+        : MapStyle.defaultStyle,
+  );
   bool _saved = false;
 
   static final _markers = [
@@ -193,42 +197,47 @@ class _MapHomeScreenState extends State<MapHomeScreen> {
                     ],
                   ),
                 ),
-                if (widget.mode == MapMode.realtime && _options.traffic)
-                  const Positioned(
-                    left: S.md,
-                    bottom: 168,
-                    child: _TrafficLegend(),
-                  ),
-                if (_modeActionLabel != null)
-                  Positioned(
-                    left: S.md,
-                    right: S.md,
-                    bottom: 168,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: ActionChip(
-                        avatar: Icon(widget.mode.icon, size: 18, color: widget.mode.color),
-                        label: Text(_modeActionLabel!),
-                        onPressed: _openModeAction,
-                        backgroundColor: Theme.of(context).colorScheme.surface,
-                        side: BorderSide(color: scheme.outline),
-                      ),
-                    ),
-                  ),
                 Positioned(
                   left: S.md,
                   right: S.md,
                   bottom: S.md,
-                  child: _NearbyCard(
-                    place: samplePlaces.first,
-                    onOpen: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => PlaceDetailScreen(place: samplePlaces.first),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.mode == MapMode.realtime && _options.traffic)
+                        const _TrafficCard(),
+                      if (_modeActionLabel != null) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: ActionChip(
+                            avatar: Icon(
+                              widget.mode.icon,
+                              size: 18,
+                              color: widget.mode.color,
+                            ),
+                            label: Text(_modeActionLabel!),
+                            onPressed: _openModeAction,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.surface,
+                            side: BorderSide(color: scheme.outline),
+                          ),
+                        ),
+                        const SizedBox(height: S.sm),
+                      ],
+                      _NearbyCard(
+                        place: samplePlaces.first,
+                        onOpen: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                PlaceDetailScreen(place: samplePlaces.first),
+                          ),
+                        ),
+                        onSeeAll: _openExplore,
+                        saved: _saved,
+                        onSave: () => setState(() => _saved = !_saved),
                       ),
-                    ),
-                    onSeeAll: _openExplore,
-                    saved: _saved,
-                    onSave: () => setState(() => _saved = !_saved),
+                    ],
                   ),
                 ),
               ],
@@ -332,25 +341,62 @@ class _NearbyCard extends StatelessWidget {
   }
 }
 
-class _TrafficLegend extends StatelessWidget {
-  const _TrafficLegend();
+class _TrafficCard extends StatelessWidget {
+  const _TrafficCard();
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: S.md, vertical: S.sm),
+      padding: const EdgeInsets.all(S.md),
       decoration: BoxDecoration(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(R.card),
-        boxShadow: AppShadows.card,
+        boxShadow: AppShadows.float,
       ),
-      child: const Column(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LegendDot(color: AppColors.danger, label: 'Heavy'),
-          _LegendDot(color: AppColors.warning, label: 'Moderate'),
-          _LegendDot(color: AppColors.success, label: 'Smooth'),
+          Row(
+            children: [
+              const ModeBadge(
+                icon: Icons.directions_car,
+                color: AppColors.modeRealtime,
+                size: 38,
+              ),
+              const SizedBox(width: S.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Live Traffic', style: text.titleMedium),
+                    const SizedBox(height: 2),
+                    Text('Real-time traffic conditions', style: text.bodySmall),
+                    Text('on major roads', style: text.bodySmall),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, size: 20, color: scheme.onSurfaceVariant),
+            ],
+          ),
+          const SizedBox(height: S.sm),
+          const Row(
+            children: [
+              _LegendDot(color: AppColors.danger, label: 'Heavy'),
+              SizedBox(width: S.lg),
+              _LegendDot(color: AppColors.warning, label: 'Moderate'),
+              SizedBox(width: S.lg),
+              _LegendDot(color: AppColors.success, label: 'Smooth'),
+            ],
+          ),
+          const SizedBox(height: S.xs),
+          Text(
+            'Sample traffic state — the OpenGeo API does not serve live traffic.',
+            style: text.labelSmall,
+          ),
         ],
       ),
     );

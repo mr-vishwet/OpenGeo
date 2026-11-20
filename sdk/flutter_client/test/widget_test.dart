@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:opengeo_flutter/main.dart';
 import 'package:opengeo_flutter/models/map_mode.dart';
 import 'package:opengeo_flutter/screens/select_mode_screen.dart';
+import 'package:opengeo_flutter/screens/shell_screen.dart';
 
 void main() {
   testWidgets('splash shows the brand and Get Started', (tester) async {
@@ -47,4 +48,19 @@ void main() {
     await tester.scrollUntilVisible(find.text('Custom World'), 200);
     expect(find.text('Custom World'), findsOneWidget);
   });
+
+  for (final mode in MapMode.values) {
+    testWidgets('${mode.label} shell lays out on a 360x640 screen',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(MaterialApp(home: ShellScreen(mode: mode)));
+      await tester.pumpAndSettle(const Duration(seconds: 1));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(NavigationBar), findsOneWidget);
+    });
+  }
 }
