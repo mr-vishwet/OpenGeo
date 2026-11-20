@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/map_mode.dart';
+import '../widgets/slippy_map.dart';
 import 'explore_screen.dart';
 import 'map_home_screen.dart';
 import 'profile_screen.dart';
@@ -8,9 +9,10 @@ import 'saved_screen.dart';
 
 /// The four-tab app shell from the reference: Map, Explore, Saved, Profile.
 class ShellScreen extends StatefulWidget {
-  const ShellScreen({super.key, required this.mode});
+  const ShellScreen({super.key, required this.mode, this.initialStyle});
 
   final MapMode mode;
+  final MapStyle? initialStyle;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -25,7 +27,7 @@ class _ShellScreenState extends State<ShellScreen> {
       body: IndexedStack(
         index: _index,
         children: [
-          MapHomeScreen(mode: widget.mode),
+          MapHomeScreen(mode: widget.mode, initialStyle: widget.initialStyle),
           ExploreScreen(
             mode: widget.mode,
             onViewOnMap: () => setState(() => _index = 0),

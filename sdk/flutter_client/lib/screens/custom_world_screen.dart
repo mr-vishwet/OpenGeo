@@ -32,7 +32,7 @@ class _CustomWorldScreenState extends State<CustomWorldScreen> {
             child: SlippyMap(
               center: puneCentre,
               zoom: 13,
-              style: MapStyle.defaultStyle,
+              style: MapStyle.street,
             ),
           ),
           SafeArea(

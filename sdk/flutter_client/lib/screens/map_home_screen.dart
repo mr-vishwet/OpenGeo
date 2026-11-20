@@ -16,9 +16,12 @@ import 'place_detail_screen.dart';
 
 /// Map tab: brand header, search, live raster map, floating controls, Nearby card.
 class MapHomeScreen extends StatefulWidget {
-  const MapHomeScreen({super.key, required this.mode});
+  const MapHomeScreen({super.key, required this.mode, this.initialStyle});
 
   final MapMode mode;
+
+  /// Overrides the style this mode normally starts with (`?style=` deep link).
+  final MapStyle? initialStyle;
 
   @override
   State<MapHomeScreen> createState() => _MapHomeScreenState();
@@ -27,9 +30,14 @@ class MapHomeScreen extends StatefulWidget {
 class _MapHomeScreenState extends State<MapHomeScreen> {
   final _mapKey = GlobalKey<SlippyMapState>();
   late MapOptions _options = MapOptions(
-    style: widget.mode == MapMode.realtime || widget.mode == MapMode.spatial
-        ? MapStyle.satellite
-        : MapStyle.defaultStyle,
+    style: widget.initialStyle ??
+        switch (widget.mode) {
+          MapMode.realtime => MapStyle.satellite,
+          MapMode.spatial => MapStyle.terrain,
+          _ => MapStyle.street,
+        },
+    // The game-style mode is the one that wants visible relief out of the box.
+    relief: widget.mode == MapMode.spatial,
   );
   bool _saved = false;
 
@@ -150,6 +158,7 @@ class _MapHomeScreenState extends State<MapHomeScreen> {
                     center: puneCentre,
                     zoom: 12,
                     style: _options.style,
+                    relief: _options.relief,
                     markers: _markers,
                   ),
                 ),

@@ -5,16 +5,25 @@ import '../widgets/slippy_map.dart';
 
 /// Result of the Map Options sheet.
 class MapOptions {
-  const MapOptions({this.style = MapStyle.defaultStyle, this.traffic = true});
+  const MapOptions({
+    this.style = MapStyle.street,
+    this.traffic = true,
+    this.relief = false,
+  });
 
   final MapStyle style;
 
   /// Shows the sample traffic layer card on the map.
   final bool traffic;
 
-  MapOptions copyWith({MapStyle? style, bool? traffic}) => MapOptions(
+  /// Draws the Esri hillshade layer over the base map for real terrain relief.
+  final bool relief;
+
+  MapOptions copyWith({MapStyle? style, bool? traffic, bool? relief}) =>
+      MapOptions(
         style: style ?? this.style,
         traffic: traffic ?? this.traffic,
+        relief: relief ?? this.relief,
       );
 }
 
@@ -31,7 +40,6 @@ class MapOptionsSheet extends StatefulWidget {
 class _MapOptionsSheetState extends State<MapOptionsSheet> {
   late MapOptions _options = widget.initial;
   bool _buildings3d = true;
-  bool _terrain = true;
   bool _indoor = false;
   bool _offline = false;
 
@@ -84,13 +92,14 @@ class _MapOptionsSheetState extends State<MapOptionsSheet> {
               label: 'Satellite View',
               value: _options.style == MapStyle.satellite,
               onChanged: (v) => setState(() => _options = _options.copyWith(
-                    style: v ? MapStyle.satellite : MapStyle.defaultStyle,
+                    style: v ? MapStyle.satellite : MapStyle.street,
                   )),
             ),
             _SwitchRow(
-              label: 'Terrain',
-              value: _terrain,
-              onChanged: (v) => setState(() => _terrain = v),
+              label: 'Terrain Relief',
+              value: _options.relief,
+              onChanged: (v) =>
+                  setState(() => _options = _options.copyWith(relief: v)),
             ),
             _SwitchRow(
               label: 'Indoor Maps',
@@ -181,7 +190,7 @@ class _StyleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final (icon, colors) = switch (style) {
-      MapStyle.defaultStyle => (
+      MapStyle.street => (
           Icons.map_outlined,
           const [Color(0xFFF5F7FA), Color(0xFFDDE7F0)],
         ),
@@ -190,8 +199,12 @@ class _StyleTile extends StatelessWidget {
           const [Color(0xFF2C3138), Color(0xFF15181D)],
         ),
       MapStyle.satellite => (
-          Icons.terrain,
+          Icons.satellite_alt_outlined,
           const [Color(0xFF3E5C43), Color(0xFF1F3B52)],
+        ),
+      MapStyle.terrain => (
+          Icons.terrain,
+          const [Color(0xFFCBC3A9), Color(0xFF7C8A6A)],
         ),
     };
 
@@ -222,7 +235,7 @@ class _StyleTile extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 22,
-                  color: style == MapStyle.defaultStyle
+                  color: style == MapStyle.street
                       ? AppColors.textSecondary
                       : Colors.white70,
                 ),

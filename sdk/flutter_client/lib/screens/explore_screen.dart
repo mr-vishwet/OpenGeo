@@ -124,7 +124,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: SlippyMap(
               center: puneCentre,
               zoom: 12,
-              style: MapStyle.defaultStyle,
+              style: MapStyle.street,
               markers: [
                 for (final place in results)
                   MapMarker(

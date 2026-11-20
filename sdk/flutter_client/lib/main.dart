@@ -10,8 +10,15 @@ import 'screens/route_screen.dart';
 import 'screens/saved_screen.dart';
 import 'screens/shell_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/slippy_map.dart';
 
 void main() {
+  // Bound decoded tile memory: the viewport only ever shows a few dozen tiles,
+  // so the default 100 MB / 1000-image budget is wasted headroom.
+  WidgetsFlutterBinding.ensureInitialized();
+  final imageCache = PaintingBinding.instance.imageCache;
+  imageCache.maximumSizeBytes = 64 << 20; // 64 MB
+  imageCache.maximumSize = 256;
   runApp(const OpenGeoApp());
 }
 
@@ -37,6 +44,15 @@ Widget? screenFromName(String? name) => switch (name) {
       _ => null,
     };
 
+/// Resolves `?style=<name>` to a base-map preset.
+MapStyle? mapStyleFromName(String? name) {
+  if (name == null || name.isEmpty) return null;
+  for (final style in MapStyle.values) {
+    if (style.name == name) return style;
+  }
+  return null;
+}
+
 /// OpenGeo Flutter client — example app for the SDK.
 ///
 /// Flow: splash → Select a Mode → four-tab shell (Map, Explore, Saved, Profile).
@@ -54,7 +70,13 @@ class OpenGeoApp extends StatelessWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: direct ?? (mode == null ? const OnboardingScreen() : ShellScreen(mode: mode)),
+      home: direct ??
+          (mode == null
+              ? const OnboardingScreen()
+              : ShellScreen(
+                  mode: mode,
+                  initialStyle: mapStyleFromName(query['style']),
+                )),
     );
   }
 }

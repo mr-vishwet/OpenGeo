@@ -5,15 +5,38 @@ import 'package:flutter/material.dart';
 import '../models/geo_point.dart';
 import '../theme/app_theme.dart';
 
-/// Tile source for the raster base map.
+/// Base-map preset. Each preset is a tile source plus its attribution, so a
+/// production deployment can swap in self-hosted OpenGeo tiles by changing one
+/// entry here.
 enum MapStyle {
-  defaultStyle('Default'),
-  dark('Dark'),
-  satellite('Satellite');
+  street('Street', 'Esri World Street Map'),
+  dark('Dark', 'Esri Dark Gray Canvas'),
+  satellite('Satellite', 'Esri World Imagery'),
+  terrain('Terrain', 'OpenTopoMap');
 
-  const MapStyle(this.label);
+  const MapStyle(this.label, this.source);
 
   final String label;
+
+  /// Human-readable tile provider, shown on the Profile screen.
+  final String source;
+
+  String url(int z, int x, int y) => switch (this) {
+        MapStyle.street =>
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/$z/$y/$x',
+        MapStyle.dark =>
+          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/$z/$y/$x',
+        MapStyle.satellite =>
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/$z/$y/$x',
+        MapStyle.terrain => 'https://a.tile.opentopomap.org/$z/$x/$y.png',
+      };
+
+  String get attribution => switch (this) {
+        MapStyle.satellite => 'Esri, Maxar, Earthstar Geographics',
+        MapStyle.terrain =>
+          '© OpenStreetMap contributors, SRTM · style OpenTopoMap (CC-BY-SA)',
+        _ => '© OpenStreetMap contributors · Esri',
+      };
 }
 
 /// A pin drawn on the map.
@@ -44,11 +67,12 @@ class SlippyMap extends StatefulWidget {
     super.key,
     required this.center,
     this.zoom = 13,
-    this.style = MapStyle.defaultStyle,
+    this.style = MapStyle.street,
     this.markers = const [],
     this.route = const [],
     this.routeColor,
     this.showAttribution = true,
+    this.relief = false,
     this.onMarkerTap,
   });
 
@@ -59,6 +83,10 @@ class SlippyMap extends StatefulWidget {
   final List<GeoPoint> route;
   final Color? routeColor;
   final bool showAttribution;
+
+  /// Overlays the Esri World Hillshade tile layer for realistic terrain.
+  final bool relief;
+
   final ValueChanged<int>? onMarkerTap;
 
   @override
@@ -118,21 +146,44 @@ class SlippyMapState extends State<SlippyMap> {
     );
   }
 
-  String _tileUrl(int z, int x, int y) {
-    switch (widget.style) {
-      case MapStyle.defaultStyle:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/$z/$y/$x';
-      case MapStyle.dark:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/$z/$y/$x';
-      case MapStyle.satellite:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/$z/$y/$x';
-    }
-  }
+  String get _attribution => widget.style.attribution;
 
-  String get _attribution => switch (widget.style) {
-        MapStyle.satellite => 'Esri, Maxar, Earthstar Geographics',
-        _ => '© OpenStreetMap contributors · Esri',
-      };
+  List<Widget> _tiles({
+    required String Function(int x, int y) url,
+    required double left,
+    required double top,
+    required int z,
+    required int n,
+    required int firstX,
+    required int lastX,
+    required int firstY,
+    required int lastY,
+    required Color fallback,
+    double opacity = 1,
+  }) {
+    final out = <Widget>[];
+    for (var x = firstX; x <= lastX; x++) {
+      for (var y = firstY; y <= lastY; y++) {
+        if (y < 0 || y >= n) continue;
+        final wrappedX = ((x % n) + n) % n;
+        final image = Image.network(
+          url(wrappedX, y),
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.low,
+          gaplessPlayback: true,
+          errorBuilder: (_, _, _) => ColoredBox(color: fallback),
+        );
+        out.add(Positioned(
+          left: x * _tileSize - left,
+          top: y * _tileSize - top,
+          width: _tileSize,
+          height: _tileSize,
+          child: opacity == 1 ? image : Opacity(opacity: opacity, child: image),
+        ));
+      }
+    }
+    return out;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +191,8 @@ class SlippyMapState extends State<SlippyMap> {
     final base = switch (widget.style) {
       MapStyle.dark => AppColors.darkSurfaceSunken,
       MapStyle.satellite => const Color(0xFF3A3F39),
-      MapStyle.defaultStyle =>
+      MapStyle.terrain => const Color(0xFFE8E4DA),
+      MapStyle.street =>
         dark ? AppColors.darkSurfaceSunken : AppColors.surfaceAlt,
     };
 
@@ -157,26 +209,36 @@ class SlippyMapState extends State<SlippyMap> {
         final firstY = (top / _tileSize).floor();
         final lastY = ((top + size.height) / _tileSize).ceil();
 
-        final tiles = <Widget>[];
-        for (var x = firstX; x <= lastX; x++) {
-          for (var y = firstY; y <= lastY; y++) {
-            if (y < 0 || y >= n) continue;
-            final wrappedX = ((x % n) + n) % n;
-            tiles.add(Positioned(
-              left: x * _tileSize - left,
-              top: y * _tileSize - top,
-              width: _tileSize,
-              height: _tileSize,
-              child: Image.network(
-                _tileUrl(z, wrappedX, y),
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.low,
-                gaplessPlayback: true,
-                errorBuilder: (_, _, _) => ColoredBox(color: base),
-              ),
-            ));
-          }
-        }
+        final tiles = _tiles(
+          url: (x, y) => widget.style.url(z, x, y),
+          left: left,
+          top: top,
+          z: z,
+          n: n,
+          firstX: firstX,
+          lastX: lastX,
+          firstY: firstY,
+          lastY: lastY,
+          fallback: base,
+        );
+        // One extra grayscale layer is cheap (~9 KB a tile) and gives real
+        // relief on street and satellite bases.
+        final reliefTiles = widget.relief
+            ? _tiles(
+                url: (x, y) =>
+                    'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/$z/$y/$x',
+                left: left,
+                top: top,
+                z: z,
+                n: n,
+                firstX: firstX,
+                lastX: lastX,
+                firstY: firstY,
+                lastY: lastY,
+                fallback: const Color(0x00000000),
+                opacity: 0.55,
+              )
+            : const <Widget>[];
 
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -202,6 +264,7 @@ class SlippyMapState extends State<SlippyMap> {
               children: [
                 ColoredBox(color: base),
                 ...tiles,
+                ...reliefTiles,
                 if (widget.route.length > 1)
                   Positioned.fill(
                     child: IgnorePointer(

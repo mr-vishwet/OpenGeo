@@ -93,7 +93,7 @@ OpenGeo ships five map modes. They share one geography engine; only the renderin
 | **Realtime** | Aerial map with a live-traffic card and a Heavy / Moderate / Smooth legend | Daily navigation, delivery tracking, ride-hailing |
 | **Essential** | 2D street map with nearby places | Search-first apps, light data plans |
 | **Intelligence** | Natural-language answers with a map radius and matched places | Voice assistants, accessibility, exploratory search |
-| **Spatial Engine** | Satellite map with a safe-zone countdown and match HUD | Games, simulations, AR experiences |
+| **Spatial Engine** | Terrain map with shaded relief, a safe-zone countdown and match HUD | Games, simulations, AR experiences |
 | **Custom World** | Base map plus a local layer checklist (buildings, terrain, water, events) | Branded worlds, private layers |
 
 Screenshots below are the Flutter example app running against Pune sample data.
@@ -121,10 +121,11 @@ Each mode is also reachable through the same `opengeo-mcp` tool suite and Dart S
 - **Saved**: All / Favorites / Visits with heart toggles
 - **Profile**: current mode, appearance, API endpoint and data attribution
 - **Supporting screens**: route preview, OpenGeo AI answer, game-mode HUD, custom-world layers, map-options sheet
-- **Tiles**: Esri World Street Map, Dark Gray Canvas and World Imagery with attribution — point them at the OpenGeo tile endpoint once it serves raster tiles
-- **Deep links**: `?mode=realtime|essential|intelligence|spatial|custom` opens a mode directly; `?screen=ai|game|custom-world|route|explore|saved` opens one screen
+- **Tiles**: four base styles — Esri World Street Map, Dark Gray Canvas, World Imagery and OpenTopoMap terrain — plus an optional Esri World Hillshade relief overlay ("Terrain Relief" in Map Options), all with attribution. Point the `MapStyle` enum at the OpenGeo tile endpoint to self-host
+- **Low latency / low memory**: only viewport tiles are fetched, decoded tiles are capped at 64 MB / 256 images, tiles decode at `FilterQuality.low`, and the hillshade layer adds ~9 KB per tile
+- **Deep links**: `?mode=realtime|essential|intelligence|spatial|custom` opens a mode directly; `?screen=ai|game|custom-world|route|explore|saved` opens one screen; `?style=street|dark|satellite|terrain` overrides the base map
 - **Honest gaps**: routing, the AI answer, live traffic, 3D buildings, indoor maps and offline mode are labelled previews. Ratings, review counts and distances are marked sample values because the OpenGeo API does not serve them.
-- **Tests**: 27 passing unit and widget tests (models, modes, projection, layout)
+- **Tests**: 30 passing unit and widget tests (models, modes, projection, tile styles, layout)
 
 ```bash
 cd sdk/flutter_client
